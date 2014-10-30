@@ -1,0 +1,5 @@
+[package]
+
+name = "gtfs-map"
+version = "0.0.1"
+authors = ["George Schneeloch <bostonbusmap@gmail.com>"]
