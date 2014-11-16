@@ -36,7 +36,7 @@ pub struct Shape {
     pub shape_pt_lat : String,
     pub shape_pt_lon : String,
     pub shape_pt_sequence : int,
-    pub shape_dist_traveled : int
+    pub shape_dist_traveled : String
 }
 
 #[deriving(Decodable)]
