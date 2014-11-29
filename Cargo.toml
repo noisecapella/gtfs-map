@@ -4,7 +4,4 @@ name = "gtfs-map"
 version = "0.0.1"
 authors = ["George Schneeloch <bostonbusmap@gmail.com>"]
 
-[dependencies.rust-csv]
-
-git = "https://github.com/BurntSushi/rust-csv.git"
 

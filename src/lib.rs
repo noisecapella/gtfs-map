@@ -1,7 +1,16 @@
-extern crate csv;
-extern crate serialize;
-
 use std::collections::HashSet;
+use std::io::fs::File;
+use std::io::BufferedReader;
+use std::slice::Items;
+use std::iter::Skip;
+use std::io::Lines;
+use std::io::IoResult;
+use std::iter::Filter;
+use std::rc::Rc;
+
+use route::RouteIterator;
+use shape::ShapeIterator;
+use trip::TripIterator;
 
 #[deriving(Decodable)]
 pub struct CalendarRow {
@@ -17,97 +26,38 @@ pub struct CalendarRow {
     pub end_date: String
 }
 
-#[deriving(Decodable)]
-pub struct Route {
-    pub route_id : String,
-    pub agency_id : String,
-    pub route_short_name : String,
-    pub route_long_name : String,
-    pub route_desc : String,
-    pub route_type : int,
-    pub route_url : String,
-    pub route_color : String,
-    pub route_text_color : String
-}
-
-#[deriving(Decodable)]
-pub struct Shape {
-    pub shape_id : String,
-    pub shape_pt_lat : String,
-    pub shape_pt_lon : String,
-    pub shape_pt_sequence : int,
-    pub shape_dist_traveled : String
-}
-
-#[deriving(Decodable)]
-pub struct Trip {
-    pub route_id : String,
-    pub service_id : String,
-    pub trip_id : String,
-    pub trip_headsign : String,
-    pub trip_short_name : String,
-    pub direction_id : int,
-    pub block_id : String,
-    pub shape_id : String
-}
-
 pub struct GtfsMap {
     gtfs_path : Path
 }
 
 impl GtfsMap {
-    pub fn new(gtfs_path : String) -> GtfsMap {
+    pub fn new(gtfs_path : Path) -> GtfsMap {
         
         GtfsMap {
-            gtfs_path: Path::new(gtfs_path)
+            gtfs_path: gtfs_path
         }
     }
 
     // TODO: make into iterators
-    pub fn find_routes_by_name(&self, name : String) -> Vec<Route> {
+    pub fn find_routes_by_name<'a>(&'a self, name : &'a str) -> RouteIterator {
         let routes_path = self.gtfs_path.join("routes.txt");
-        let mut reader = csv::Reader::from_file(&routes_path);
-        // TODO: this should be handled by reader
-
-        let mut ret : Vec<Route> = Vec::new();
-
-        for row in reader.decode() {
-            let record : Route = row.unwrap();
-            if record.route_short_name == name ||
-                record.route_long_name == name {
-                ret.push(record);
-            }
-        }
-        ret
+        RouteIterator::new(&routes_path, Some(name))
     }
-
-    pub fn find_shapes_by_route(&self, route_id : String) -> Vec<Shape> {
+    
+    pub fn find_shapes_by_route<'a>(&'a self, route_id : &'a str) -> ShapeIterator {
         let trips_path = self.gtfs_path.join("trips.txt");
-        let mut trip_reader = csv::Reader::from_file(&trips_path);
-        // TODO: this should be handled by reader
-
         let mut trip_shape_ids : HashSet<String> = HashSet::new();
 
-        for row in trip_reader.decode() {
-            let trip : Trip = row.unwrap();
-            if trip.route_id == route_id {
+        for trip in TripIterator::new(&trips_path) {
+            if trip.route_id.as_slice() == route_id {
                 trip_shape_ids.insert(trip.shape_id);
             }
         }
 
-        let mut shapes : Vec<Shape> = Vec::new();
-        
         // TODO: should we filter out duplicate shapes?
         let shapes_path = self.gtfs_path.join("shapes.txt");
-        let mut shape_reader = csv::Reader::from_file(&shapes_path);
-        for row in shape_reader.decode() {
-            let shape : Shape = row.unwrap();
-            if trip_shape_ids.contains(&shape.shape_id) {
-                shapes.push(shape);
-            }
-                
-        }
-        shapes
+
+        ShapeIterator::new(&shapes_path, Some(trip_shape_ids))
     }
 
 }

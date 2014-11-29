@@ -1,12 +1,4 @@
 [root]
 name = "gtfs-map"
 version = "0.0.1"
-dependencies = [
- "rust-csv 0.5.1 (git+https://github.com/BurntSushi/rust-csv.git)",
-]
-
-[[package]]
-name = "rust-csv"
-version = "0.5.1"
-source = "git+https://github.com/BurntSushi/rust-csv.git#7a216b4cf5616d34ed0f8896624740fb9b66241d"
 
