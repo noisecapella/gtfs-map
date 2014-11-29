@@ -12,7 +12,6 @@ use route::RouteIterator;
 use shape::ShapeIterator;
 use trip::TripIterator;
 
-#[deriving(Decodable)]
 pub struct CalendarRow {
     pub service_id: String,
     pub monday: u8,
