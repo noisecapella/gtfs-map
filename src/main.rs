@@ -10,14 +10,15 @@ pub mod route;
 pub mod shape;
 pub mod trip;
 pub mod common;
-
+pub mod stop;
+pub mod stop_times;
 
 fn main()  {
     // TODO: make this useful
     
     let gtfs_path = Path::new("/home/schneg/Projects/bostonbusmap/tools/gtfs/mbta");
     let gtfs_map = GtfsMap::new(gtfs_path);
-    let mut routes = gtfs_map.find_routes_by_name("Red Line");
+    let routes = gtfs_map.find_routes_by_name("Red Line");
     for &(route_id, route) in routes.iter() {
         println!("{}", route_id);
         // prints 931_, 933_
