@@ -19,13 +19,17 @@ fn main()  {
     let gtfs_path = Path::new("/home/schneg/Projects/bostonbusmap/tools/gtfs/mbta");
     let gtfs_map = GtfsMap::new(gtfs_path);
     let routes = gtfs_map.find_routes_by_name("Red Line");
-    for &(route_id, route) in routes.iter() {
+    for (route_id, route) in routes.iter() {
         println!("{}", route_id);
         // prints 931_, 933_
     }
 
-    for &(shape_id, shape) in gtfs_map.find_shapes_by_route("931_").iter() {
+    for (shape_id, shape) in gtfs_map.find_shapes_by_route("931_").iter() {
         println!("{}", shape_id);
+    }
+
+    for (stop_id, stop) in gtfs_map.find_stops_by_route("71").iter() {
+        println!("{}", stop.stop_name);
     }
 }
 

@@ -48,52 +48,48 @@ impl GtfsMap {
         }
     }
     
-    pub fn find_routes_by_name<'a>(&'a self, name : &'a str) -> Vec<(&'a str, &'a Route)> {
-        let mut ret : Vec<(&'a str, &'a Route)> = Vec::new();
-        for (route_id, route) in self.routes.iter() {
-            if route.route_short_name == name || route.route_long_name == name {
-                ret.push((route_id.as_slice(), route));
-            }
-        }
-        ret
+    pub fn find_routes_by_name<'a>(&'a self, name : &'a str) -> HashMap<&'a str, &'a Route> {
+        self.routes.iter()
+            .filter(|&(route_id, route)| route.route_short_name == name || route.route_long_name == name)
+            .map(|(route_id, route)| (route_id.as_slice(), route))
+            .collect()
     }
 
-    pub fn find_shapes_by_route<'a>(&'a self, route_id : &'a str) -> Vec<(&'a str, &'a Shape)> {
-        let mut shape_ids : HashSet<&str> = HashSet::new();
-
-        for (trip_id, trip) in self.trips.iter() {
-            if trip.route_id == route_id {
-                shape_ids.insert(trip.shape_id.as_slice());
-            }
-        }
-
-        let mut ret : Vec<(&'a str, &'a Shape)> = Vec::new();
-        
-        for (shape_id, shape) in self.shapes.iter() {
-            let shape_id_slice = shape_id.as_slice();
-            if shape_ids.contains(shape_id_slice) {
-                ret.push((shape_id_slice, shape));
-            }
-        }
-        ret
+    pub fn find_shapes_by_route<'a>(&'a self, route_id : &'a str) -> HashMap<&'a str, &'a Shape> {
+        self.trips.iter()
+            .filter(|&(trip_id, trip)| trip.route_id == route_id)
+            .map(|(trip_id, trip)| {
+                let shape_id_slice = trip.shape_id.as_slice();
+                (shape_id_slice, self.shapes.get(shape_id_slice).unwrap())
+            }).collect()
     }
 
-    pub fn find_routes_by_route_type<'a>(&'a self, route_type : int) -> Vec<(&'a str, &'a Route)> {
-        let mut ret : Vec<(&'a str, &'a Route)> = Vec::new();
-
-        for (route_id, route) in self.routes.iter() {
-            if route.route_type == route_type {
-                ret.push((route_id.as_slice(), route));
-            }
-        }
-
-        ret
+    pub fn find_routes_by_route_type<'a>(&'a self, route_type : int) -> HashMap<&'a str, &'a Route> {
+        self.routes.iter()
+            .filter(|&(route_id, route)| route.route_type == route_type)
+            .map(|(route_id, route)| (route_id.as_slice(), route))
+            .collect()
     }
 
-    pub fn find_stops_by_route<'a>(&'a self, route_id : &'a str) -> Vec<(&'a str, &'a Stop)> {
-        let mut ret : Vec<(&'a str, &'a Stop)> = Vec::new();
+    pub fn find_stops_by_route<'a>(&'a self, route_id : &'a str) -> HashMap<&'a str, &'a Stop> {
+        self.trips.iter()
+            .filter(|&(trip_id, trip)| trip.route_id == route_id)
+            .flat_map(|(trip_id, trip)| {
+                let stop_times_indexes = self.stop_times.trip_lookup.get(trip_id).unwrap();
 
+                stop_times_indexes.iter()
+                    .map(|i| {
+                        let stop_time = self.stop_times.stop_times.get(*i).unwrap();
+                        let slice = stop_time.stop_id.as_slice();
+                        let stop = self.stops.get(slice).unwrap();
+                        (slice, stop)
+                    })
+            }).collect()
+    }
 
+    pub fn find_trips_by_route<'a>(&'a self, route_id : &'a str) -> HashMap<&'a str, &'a Trip> {
+        let mut ret : HashMap<&'a str, &'a Trip> = HashMap::new();
+        // TODO
         ret
     }
 }
