@@ -8,55 +8,59 @@ use std::io::IoResult;
 use std::iter::Filter;
 use std::rc::Rc;
 
-use route::RouteIterator;
-use shape::ShapeIterator;
-use trip::TripIterator;
-
-pub struct CalendarRow {
-    pub service_id: String,
-    pub monday: u8,
-    pub tuesday: u8,
-    pub wednesday: u8,
-    pub thursday: u8,
-    pub friday: u8,
-    pub saturday: u8,
-    pub sunday: u8,
-    pub start_date: String,
-    pub end_date: String
-}
+use route::Route;
+use shape::Shape;
+use trip::Trip;
+use std::collections::HashMap;
 
 pub struct GtfsMap {
-    gtfs_path : Path
+    gtfs_path : Path,
+    routes : HashMap<String, Route>,
+    shapes : HashMap<String, Shape>,
+    trips : HashMap<String, Trip>
 }
 
 impl GtfsMap {
-    pub fn new(gtfs_path : Path) -> GtfsMap {
+    pub fn new(gtfs_path : Path) -> GtfsMap { 
+        let routes_path = gtfs_path.join("routes.txt");
+        let shapes_path = gtfs_path.join("shapes.txt");
+        let trips_path = gtfs_path.join("trips.txt");
         
         GtfsMap {
-            gtfs_path: gtfs_path
+            gtfs_path: gtfs_path,
+            routes : Route::make_routes(&routes_path),
+            shapes : Shape::make_shapes(&shapes_path),
+            trips : Trip::make_trips(&trips_path)
         }
     }
-
-    // TODO: make into iterators
-    pub fn find_routes_by_name<'a>(&'a self, name : &'a str) -> RouteIterator {
-        let routes_path = self.gtfs_path.join("routes.txt");
-        RouteIterator::new(&routes_path, Some(name))
-    }
     
-    pub fn find_shapes_by_route<'a>(&'a self, route_id : &'a str) -> ShapeIterator {
-        let trips_path = self.gtfs_path.join("trips.txt");
-        let mut trip_shape_ids : HashSet<String> = HashSet::new();
+    pub fn find_routes_by_name<'a>(&'a self, name : &'a str) -> Vec<(&'a str, &'a Route)> {
+        let mut ret : Vec<(&'a str, &'a Route)> = Vec::new();
+        for (route_id, route) in self.routes.iter() {
+            if route.route_short_name == name || route.route_long_name == name {
+                ret.push((route_id.as_slice(), route));
+            }
+        }
+        ret
+    }
 
-        for trip in TripIterator::new(&trips_path) {
-            if trip.route_id.as_slice() == route_id {
-                trip_shape_ids.insert(trip.shape_id);
+    pub fn find_shapes_by_route<'a>(&'a self, route_id : &'a str) -> Vec<(&'a str, &'a Shape)> { //'
+        let mut shape_ids : HashSet<&str> = HashSet::new();
+
+        for (trip_id, trip) in self.trips.iter() {
+            if trip.route_id == route_id {
+                shape_ids.insert(trip.shape_id.as_slice());
             }
         }
 
-        // TODO: should we filter out duplicate shapes?
-        let shapes_path = self.gtfs_path.join("shapes.txt");
-
-        ShapeIterator::new(&shapes_path, Some(trip_shape_ids))
+        let mut ret : Vec<(&'a str, &'a Shape)> = Vec::new();
+        
+        for (shape_id, shape) in self.shapes.iter() {
+            let shape_id_slice = shape_id.as_slice();
+            if shape_ids.contains(shape_id_slice) {
+                ret.push((shape_id_slice, shape));
+            }
+        }
+        ret
     }
-
 }

@@ -1,3 +1,4 @@
+extern crate csv;
 use std::collections::HashSet;
 use std::io::fs::File;
 use std::io::BufferedReader;
@@ -7,56 +8,43 @@ use std::io::Lines;
 use std::io::IoResult;
 use std::iter::Filter;
 use std::rc::Rc;
+use std::collections::HashMap;
 
 use common::as_str;
 
 pub struct Trip {
     pub route_id : String,
     pub service_id : String,
-    pub trip_id : String,
     pub trip_headsign : String,
     pub trip_short_name : String,
-    pub direction_id : int,
+    pub direction_id : uint,
     pub block_id : String,
     pub shape_id : String
 }
 
-pub struct TripIterator {
-    reader : BufferedReader<IoResult<File>>
-}
+impl Trip {
+    pub fn make_trips(trips_path : &Path) -> HashMap<String, Trip> {
+        let mut reader = csv::Reader::from_file(trips_path);
 
-impl TripIterator {
-    pub fn new(trips_path : &Path) -> TripIterator {
-        let mut reader = BufferedReader::new(File::open(trips_path));
+        let mut map : HashMap<String, Trip> = HashMap::new();
+
+        for record in reader.decode() {
+            let (route_id, service_id, trip_id, trip_headsign, trip_short_name, direction_id, block_id, shape_id) :
+                (String, String, String, String, String, uint, String, String) = record.unwrap();
+
+            let trip = Trip {
+                route_id : route_id,
+                service_id : service_id,
+                trip_headsign: trip_headsign,
+                trip_short_name : trip_short_name,
+                direction_id : direction_id,
+                block_id : block_id,
+                shape_id : shape_id
+            };
+            map.insert(trip_id, trip);
+        }
+        println!("Finished reading trips");
+        map
         
-        reader.read_line();
-        TripIterator {
-            reader : reader
-        }
-    }
-}
-
-impl Iterator<Trip> for TripIterator {
-    fn next(&mut self) -> Option<Trip> {
-        let line = self.reader.read_line();
-
-        match line {
-            Ok(line_to_parse) => {
-                let pieces : Vec<&str> = line_to_parse.as_slice().trim().split_str(",").collect();
-                let trip = Trip {
-                    route_id : as_str(pieces[0]),
-                    service_id : as_str(pieces[1]),
-                    trip_id : as_str(pieces[2]),
-                    trip_headsign : as_str(pieces[3]),
-                    trip_short_name : as_str(pieces[4]),
-                    direction_id : from_str(pieces[5]).unwrap_or(0),
-                    block_id : as_str(pieces[6]),
-                    shape_id : as_str(pieces[7])
-                };
-
-                Some(trip)
-            },
-            Err(err) => None
-        }
     }
 }

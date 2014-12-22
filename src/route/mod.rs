@@ -1,3 +1,4 @@
+extern crate csv;
 use std::collections::HashSet;
 use std::io::fs::File;
 use std::io::BufferedReader;
@@ -7,11 +8,11 @@ use std::io::Lines;
 use std::io::IoResult;
 use std::iter::Filter;
 use std::rc::Rc;
+use std::collections::HashMap;
 
 use common::as_str;
 
 pub struct Route {
-    pub route_id : String,
     pub agency_id : String,
     pub route_short_name : String,
     pub route_long_name : String,
@@ -22,55 +23,32 @@ pub struct Route {
     pub route_text_color : String
 }
 
-pub struct RouteIterator<'a>  {
-    reader : BufferedReader<IoResult<File>>,
-    name : Option<&'a str>
-}
+impl Route {
 
-impl<'a> RouteIterator<'a> {
-    pub fn new(routes_path : &Path, name : Option<&'a str>) -> RouteIterator<'a> {
-        let mut reader = BufferedReader::new(File::open(routes_path));
+    pub fn make_routes(routes_path : &Path) -> HashMap<String, Route> {
+        let mut reader = csv::Reader::from_file(routes_path);
 
-        // skip first line
-        reader.read_line();
-        RouteIterator {
-            reader : reader,
-            name : name
-        }
-    }
-}
+        let mut map : HashMap<String, Route> = HashMap::new();
 
-impl<'a> Iterator<Route> for RouteIterator<'a> {
-    fn next(&mut self) -> Option<Route> {
-        loop {
-            let line = self.reader.read_line();
+        for record in reader.decode() {
+            let (route_id, agency_id, route_short_name, route_long_name, route_desc, route_type, route_url, route_color, route_text_color) : 
+                (String, String, String, String, String, int, String, String, String) = record.unwrap();
 
-            match line {
-                Ok(line_to_parse) => {
-                    let pieces : Vec<&str> = line_to_parse.as_slice().trim().split_str(",").collect();
-                    
-                    let route = Route {
-                        route_id: as_str(pieces[0]),
-                        agency_id: as_str(pieces[1]),
-                        route_short_name: as_str(pieces[2]),
-                        route_long_name: as_str(pieces[3]),
-                        route_desc: as_str(pieces[4]),
-                        route_type: from_str(pieces[5]).unwrap(),
-                        route_url: as_str(pieces[6]),
-                        route_color: as_str(pieces[7]),
-                        route_text_color: as_str(pieces[8])
-                    };
-
-                    match self.name {
-                        Some(name) => if route.route_long_name.as_slice() == name || route.route_short_name.as_slice() == name {
-                            return Some(route)
-                        },
-                        None => return Some(route)
-                    }
-                },
-                Err(err) => return None
+            let route = Route {
+                agency_id : agency_id,
+                route_short_name : route_short_name,
+                route_long_name : route_long_name,
+                route_desc : route_desc,
+                route_type : route_type,
+                route_url : route_url,
+                route_color : route_color,
+                route_text_color : route_text_color
             };
+            map.insert(route_id, route);
         }
+        println!("Finished reading routes");
+        map
     }
-}
 
+
+}

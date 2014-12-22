@@ -16,17 +16,15 @@ fn main()  {
     // TODO: make this useful
     
     let gtfs_path = Path::new("/home/schneg/Projects/bostonbusmap/tools/gtfs/mbta");
-
     let gtfs_map = GtfsMap::new(gtfs_path);
     let mut routes = gtfs_map.find_routes_by_name("Red Line");
-    for route in routes {
-        println!("{}", route.route_id);
+    for &(route_id, route) in routes.iter() {
+        println!("{}", route_id);
         // prints 931_, 933_
     }
 
-    for shape in gtfs_map.find_shapes_by_route("931_") {
-        println!("{}", shape.shape_id);
+    for &(shape_id, shape) in gtfs_map.find_shapes_by_route("931_").iter() {
+        println!("{}", shape_id);
     }
-
 }
 
