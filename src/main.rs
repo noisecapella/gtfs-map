@@ -2,9 +2,6 @@ extern crate serialize;
 
 use lib::GtfsMap;
 
-use std::io::File;
-use std::io::BufferedReader;
-
 pub mod lib;
 pub mod route;
 pub mod shape;

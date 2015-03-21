@@ -1,10 +1,6 @@
 use std::collections::HashSet;
-use std::io::fs::File;
-use std::io::BufferedReader;
-use std::slice::Items;
 use std::iter::Skip;
 use std::io::Lines;
-use std::io::IoResult;
 use std::iter::Filter;
 use std::rc::Rc;
 use std::sync::Future;
@@ -40,11 +36,11 @@ impl GtfsMap {
         let stop_times = Future::spawn(move || StopTime::make_stop_times(&stop_times_path));
 
         GtfsMap {
-            routes : routes.unwrap(),
-            shapes : shapes.unwrap(),
-            trips : trips.unwrap(),
-            stops : stops.unwrap(),
-            stop_times : stop_times.unwrap()
+            routes : routes.into_inner(),
+            shapes : shapes.into_inner(),
+            trips : trips.into_inner(),
+            stops : stops.into_inner(),
+            stop_times : stop_times.into_inner()
         }
     }
     
@@ -64,7 +60,7 @@ impl GtfsMap {
             }).collect()
     }
 
-    pub fn find_routes_by_route_type<'a>(&'a self, route_type : int) -> HashMap<&'a str, &'a Route> {
+    pub fn find_routes_by_route_type<'a>(&'a self, route_type : u32) -> HashMap<&'a str, &'a Route> {
         self.routes.iter()
             .filter(|&(route_id, route)| route.route_type == route_type)
             .map(|(route_id, route)| (route_id.as_slice(), route))
@@ -79,7 +75,7 @@ impl GtfsMap {
 
                 stop_times_indexes.iter()
                     .map(|i| {
-                        let stop_time = self.stop_times.stop_times.get(*i).unwrap();
+                        let stop_time = self.stop_times.stop_times.get(*i as usize).unwrap();
                         let slice = stop_time.stop_id.as_slice();
                         let stop = self.stops.get(slice).unwrap();
                         (slice, stop)
