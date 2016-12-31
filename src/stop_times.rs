@@ -6,7 +6,7 @@ use std::io::Lines;
 use std::iter::Filter;
 use std::rc::Rc;
 use std::collections::HashMap;
-
+use std::path::Path;
 
 pub struct StopTimes {
     pub stop_lookup : HashMap<String, Vec<u32>>,

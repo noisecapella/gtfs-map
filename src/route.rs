@@ -6,9 +6,10 @@ use std::iter::Filter;
 use std::rc::Rc;
 use std::collections::HashMap;
 
-
+use std::path::Path;
 pub struct Route {
     pub agency_id : String,
+    pub route_id: String,
     pub route_short_name : String,
     pub route_long_name : String,
     pub route_desc : String,
@@ -31,6 +32,7 @@ impl Route {
 
             let route = Route {
                 agency_id : agency_id,
+                route_id: route_id,
                 route_short_name : route_short_name,
                 route_long_name : route_long_name,
                 route_desc : route_desc,

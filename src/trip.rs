@@ -5,7 +5,7 @@ use std::io::Lines;
 use std::iter::Filter;
 use std::rc::Rc;
 use std::collections::HashMap;
-
+use std::path::Path;
 
 pub struct Trip {
     pub route_id : String,
