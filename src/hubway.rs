@@ -1,9 +1,9 @@
 use rusqlite::Connection;
 use path;
 use constants::{HUBWAY_COLOR, HUBWAY_AGENCY_ID};
-use std::error::Error;
+use error::Error;
 
-pub fn generate_hubway(conn: &Connection, index: i32) -> Result<i32, Box<Error>> {
+pub fn generate_hubway(conn: &Connection, index: i32) -> Result<i32, Error> {
     let info_url = "https://gbfs.thehubway.com/gbfs/en/station_information.json";
     let mut statement = conn.prepare("INSERT INTO routes (route, routetitle, color, oppositecolor, listorder, agencyid, pathblob) VALUES ($1, $2, $3, $4, $5, $6, $7)").unwrap();
     let route = "Hubway";

@@ -7,7 +7,6 @@ use getopts::Options;
 use rusqlite::Connection;
 use std::fs;
 use std::process::Command;
-use std::error::Error;
 use rusqlite::types::ToSql;
 
 pub mod path;
@@ -23,12 +22,13 @@ pub mod stop;
 pub mod stop_times;
 
 use std::env;
-use error::GtfsMapError;
+use error::Error;
+use error::Error::GtfsMapError;
 
 pub mod constants;
 
 
-fn create_tables(connection: &Connection, generate_path: &Path) -> Result<(), GtfsMapError> {
+fn create_tables(connection: &Connection, generate_path: &Path) -> Result<(), Error> {
     println!("Creating tables...");
     let output = Command::new("python3").arg(generate_path.join("print_create_tables.py")).output().expect("could not execute print_create_tables.py");
     for line in String::from_utf8_lossy(&output.stdout).split("\n") {
@@ -37,14 +37,16 @@ fn create_tables(connection: &Connection, generate_path: &Path) -> Result<(), Gt
             try!(connection.execute(trim_line, &[]));
         }
     }
+    Ok(())
 }
 
-fn generate(gtfs_map: GtfsMap, connection: Connection, generate_path: &Path) -> Result<(), GtfsMapError> {
+fn generate(gtfs_map: GtfsMap, connection: Connection, generate_path: &Path) -> Result<(), Error> {
     try!(create_tables(&connection, generate_path));
     let mut index = 0;
     println!("Generating Hubway stops...");
     index = try!(hubway::generate_hubway(&connection, index));
     index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map));
+    Ok(())
 }
 
 
@@ -53,7 +55,7 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
-fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), GtfsMapError> {
+fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error> {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print help menu");
     opts.optopt("p", "path", "Path to GTFS", "GTFS_PATH");
@@ -68,12 +70,12 @@ fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), GtfsMa
         panic!("");
     }
 
-    let gtfs_path_str = try!(matches.opt_str("p").ok_or("Missing gtfs path".to_owned()));
+    let gtfs_path_str = try!(matches.opt_str("p").ok_or(GtfsMapError("Missing gtfs path".to_owned())));
     let gtfs_path = Path::new(&gtfs_path_str);
-    let output_path_str = try!(matches.opt_str("o").ok_or("Missing output path".to_owned()));
+    let output_path_str = try!(matches.opt_str("o").ok_or(GtfsMapError("Missing output path".to_owned())));
     let output_path = Path::new(&output_path_str);
 
-    let generate_path_str = try!(matches.opt_str("g").ok_or("Missing generate path".to_owned()));
+    let generate_path_str = try!(matches.opt_str("g").ok_or(GtfsMapError("Missing generate path".to_owned())));
     std::fs::remove_file(output_path);
     
     let gtfs_map = GtfsMap::new(gtfs_path);
@@ -86,10 +88,10 @@ fn main()  {
     let args : Vec<_> = env::args().collect();
     match parse_args(args) {
         Ok((gtfs_map, connection, generate_path_str)) => {
-            generate(gtfs_map, connection, &Path::new(&generate_path_str))
+            generate(gtfs_map, connection, &Path::new(&generate_path_str)).unwrap()
         }
         Err(err) => {
-            panic!(err.description().to_owned());
+            panic!(err);
         }
     }
 }

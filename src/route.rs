@@ -41,7 +41,7 @@ impl Route {
                 route_color : route_color,
                 route_text_color : route_text_color
             };
-            map.insert(route_id, route);
+            map.insert(route.route_id.to_string(), route);
         }
         println!("Finished reading routes");
         map

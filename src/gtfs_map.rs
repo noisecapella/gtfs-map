@@ -7,7 +7,7 @@ use std::thread;
 use std::collections::HashMap;
 use std::path::Path;
 
-use error::GtfsMapError;
+use error::Error;
 use route::Route;
 use shape::Shape;
 use trip::Trip;
@@ -46,7 +46,7 @@ impl GtfsMap {
         }
     }
 
-    pub fn find_routes_by_name<'a>(&'a self, name : &'a str) -> HashMap<&'a str, &'a Route>
+    pub fn find_routes_by_name(&self, name : &str) -> HashMap<&str, &Route>
     {
         self.routes.iter()
             .filter(|&(route_id, route)| route.route_short_name == name || route.route_long_name == name)
@@ -54,12 +54,12 @@ impl GtfsMap {
             .collect()
     }
 
-    pub fn find_route_by_id<'a>(&'a self, id : &'a str) -> Result<&Route, GtfsMapError>
+    pub fn find_route_by_id(&self, id : &str) -> Result<&Route, Error>
     {
-        self.routes.get(id).ok_or(GtfsMapError::String("No route found"))
+        self.routes.get(id).ok_or(Error::GtfsMapError("No route found".to_owned()))
     }
 
-    pub fn find_shapes_by_route<'a>(&'a self, route_id : &'a str) -> HashMap<&'a str, &'a Shape> {
+    pub fn find_shapes_by_route(&self, route_id : &str) -> HashMap<&str, &Shape> {
         self.trips.iter()
             .filter(|&(trip_id, trip)| trip.route_id == route_id)
             .map(|(trip_id, trip)| {
@@ -68,14 +68,14 @@ impl GtfsMap {
             }).collect()
     }
 
-    pub fn find_routes_by_route_type<'a>(&'a self, route_type : u32) -> HashMap<&'a str, &'a Route> {
+    pub fn find_routes_by_route_type(&self, route_type : u32) -> HashMap<&str, &Route> {
         self.routes.iter()
             .filter(|&(route_id, route)| route.route_type == route_type)
             .map(|(route_id, route)| (route_id.as_ref(), route))
             .collect()
     }
 
-    pub fn find_stops_by_route<'a>(&'a self, route_id : &'a str) -> HashMap<&'a str, &'a Stop> {
+    pub fn find_stops_by_route(&self, route_id : &str) -> HashMap<&str, &Stop> {
         self.trips.iter()
             .filter(|&(trip_id, trip)| trip.route_id == route_id)
             .flat_map(|(trip_id, trip)| {
@@ -91,8 +91,8 @@ impl GtfsMap {
             }).collect()
     }
 
-    pub fn find_trips_by_route<'a>(&'a self, route_id : &'a str) -> HashMap<&'a str, &'a Trip> {
-        let mut ret : HashMap<&'a str, &'a Trip> = HashMap::new();
+    pub fn find_trips_by_route(&self, route_id : &str) -> HashMap<&str, &Trip> {
+        let mut ret : HashMap<&str, &Trip> = HashMap::new();
         // TODO
         ret
     }
