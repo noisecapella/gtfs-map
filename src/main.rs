@@ -1,5 +1,6 @@
 extern crate getopts;
 extern crate rusqlite;
+extern crate byteorder;
 
 use gtfs_map::GtfsMap;
 use std::path::Path;
@@ -8,16 +9,20 @@ use rusqlite::Connection;
 use std::fs;
 use std::process::Command;
 use rusqlite::types::ToSql;
+use std::collections::HashSet;
 
 pub mod path;
 pub mod gtfs_map;
 pub mod hubway;
 pub mod mbta;
+pub mod db;
 pub mod error;
+pub mod nextbus;
 pub mod route;
 pub mod shape;
 pub mod trip;
 pub mod common;
+pub mod simplify_path;
 pub mod stop;
 pub mod stop_times;
 
@@ -30,7 +35,13 @@ pub mod constants;
 
 fn create_tables(connection: &Connection, generate_path: &Path) -> Result<(), Error> {
     println!("Creating tables...");
-    let output = Command::new("python3").arg(generate_path.join("print_create_tables.py")).output().expect("could not execute print_create_tables.py");
+    let path = &generate_path.join("print_create_tables.py");
+    let mut command = Command::new("python3");
+    let process = command.arg(path);
+    if !try!(process.status()).success() {
+        return Err(GtfsMapError(format!("Unable to run {}", path.to_str().unwrap())));
+    }
+    let output = try!(process.output());
     for line in String::from_utf8_lossy(&output.stdout).split("\n") {
         let trim_line = line.trim();
         if !trim_line.is_empty() {
@@ -45,7 +56,16 @@ fn generate(gtfs_map: GtfsMap, connection: Connection, generate_path: &Path) -> 
     let mut index = 0;
     println!("Generating Hubway stops...");
     index = try!(hubway::generate_hubway(&connection, index));
-    index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map));
+    let mut stops_inserted: HashSet<&str> = HashSet::new();
+    println!("Generating commuter rail stops...");
+    index = try!(mbta::generate_commuter_rail(&connection, index, &gtfs_map, &mut stops_inserted));
+    println!("Generating heavy rail stops...");
+    index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
+    println!("Generating nextbus stops...");
+    index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted));
+    println!("routes inserted: {}", index);
+
+    try!(connection.execute("COMMIT", &[]));
     Ok(())
 }
 
@@ -80,6 +100,7 @@ fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error>
     
     let gtfs_map = GtfsMap::new(gtfs_path);
     let connection = try!(Connection::open(&output_path));
+    try!(connection.execute("BEGIN TRANSACTION", &[]));
     Ok((gtfs_map, connection, generate_path_str))
 }
 

@@ -4,7 +4,7 @@ use std::iter::Skip;
 use std::io::Lines;
 use std::iter::Filter;
 use std::rc::Rc;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::path::Path;
 
 pub struct Stop {
@@ -21,10 +21,10 @@ pub struct Stop {
 
 impl Stop {
 
-    pub fn make_stops(routes_path : &Path) -> HashMap<String, Stop> {
+    pub fn make_stops(routes_path : &Path) -> BTreeMap<String, Stop> {
         let mut reader = csv::Reader::from_file(routes_path).unwrap();
 
-        let mut map : HashMap<String, Stop> = HashMap::new();
+        let mut map : BTreeMap<String, Stop> = BTreeMap::new();
 
         for record in reader.decode() {
             let (stop_id, stop_code, stop_name, stop_desc, stop_lat, stop_lon, zone_id, stop_url, location_type, parent_station) :

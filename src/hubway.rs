@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use rusqlite::Connection;
 use path;
 use constants::{HUBWAY_COLOR, HUBWAY_AGENCY_ID};

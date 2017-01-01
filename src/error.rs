@@ -7,6 +7,7 @@ pub enum Error {
     Rusqlite(rusqlite::Error),
     GtfsMapError(String),
     GetoptsFail(getopts::Fail),
+    Io(std::io::Error),
 }
 
 impl std::error::Error for Error {
@@ -15,6 +16,7 @@ impl std::error::Error for Error {
             Error::Rusqlite(ref err) => err.description(),
             Error::GtfsMapError(ref err) => err.as_ref(),
             Error::GetoptsFail(ref err) => err.description(),
+            Error::Io(ref err) => err.description(),
         }
     }
 
@@ -23,6 +25,7 @@ impl std::error::Error for Error {
             Error::Rusqlite(ref err) => Some(err),
             Error::GtfsMapError(ref err) => None,
             Error::GetoptsFail(ref err) => Some(err),
+            Error::Io(ref err) => Some(err),
         }
     }
 }
@@ -33,6 +36,7 @@ impl std::fmt::Display for Error {
             Error::Rusqlite(ref err) => write!(f, "SQLite error: {}", err),
             Error::GtfsMapError(ref err) => write!(f, "GtfsMap error: {}", err),
             Error::GetoptsFail(ref err) => write!(f, "Getopts error: {}", err),
+            Error::Io(ref err) => write!(f, "Io error: {}", err),
         }
     }
 }
@@ -46,5 +50,11 @@ impl From<rusqlite::Error> for Error {
 impl From<getopts::Fail> for Error {
     fn from(err: getopts::Fail) -> Error {
         Error::GetoptsFail(err)
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Error {
+        Error::Io(err)
     }
 }

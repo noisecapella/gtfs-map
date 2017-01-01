@@ -8,3 +8,4 @@ authors = ["George Schneeloch <bostonbusmap@gmail.com>"]
 csv = "*"
 getopts = "*"
 rusqlite = "*"
+byteorder = "*"

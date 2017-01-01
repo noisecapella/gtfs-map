@@ -4,7 +4,7 @@ use std::io::Lines;
 use std::iter::Filter;
 use std::rc::Rc;
 use std::thread;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 
 use error::Error;
@@ -16,10 +16,10 @@ use stop_times::StopTime;
 use stop_times::StopTimes;
 
 pub struct GtfsMap {
-    routes : HashMap<String, Route>,
-    shapes : HashMap<String, Shape>,
-    trips : HashMap<String, Trip>,
-    stops : HashMap<String, Stop>,
+    routes : BTreeMap<String, Route>,
+    shapes : BTreeMap<String, Vec<Shape>>,
+    trips : BTreeMap<String, Trip>,
+    stops : BTreeMap<String, Stop>,
     stop_times : StopTimes
 }
 
@@ -46,7 +46,7 @@ impl GtfsMap {
         }
     }
 
-    pub fn find_routes_by_name(&self, name : &str) -> HashMap<&str, &Route>
+    pub fn find_routes_by_name(&self, name : &str) -> BTreeMap<&str, &Route>
     {
         self.routes.iter()
             .filter(|&(route_id, route)| route.route_short_name == name || route.route_long_name == name)
@@ -59,25 +59,25 @@ impl GtfsMap {
         self.routes.get(id).ok_or(Error::GtfsMapError("No route found".to_owned()))
     }
 
-    pub fn find_shapes_by_route(&self, route_id : &str) -> HashMap<&str, &Shape> {
+    pub fn find_shapes_by_routes(&self, route_ids : &[&str]) -> BTreeMap<&str, &Vec<Shape>> {
         self.trips.iter()
-            .filter(|&(trip_id, trip)| trip.route_id == route_id)
+            .filter(|&(trip_id, trip)| route_ids.contains(&trip.route_id.as_ref()))
             .map(|(trip_id, trip)| {
                 let shape_id_slice = trip.shape_id.as_ref();
                 (shape_id_slice, self.shapes.get(shape_id_slice).unwrap())
             }).collect()
     }
 
-    pub fn find_routes_by_route_type(&self, route_type : u32) -> HashMap<&str, &Route> {
+    pub fn find_routes_by_route_type(&self, route_type : i32) -> BTreeMap<&str, &Route> {
         self.routes.iter()
             .filter(|&(route_id, route)| route.route_type == route_type)
             .map(|(route_id, route)| (route_id.as_ref(), route))
             .collect()
     }
 
-    pub fn find_stops_by_route(&self, route_id : &str) -> HashMap<&str, &Stop> {
+    pub fn find_stops_by_routes(&self, route_ids : &[&str]) -> BTreeMap<&str, &Stop> {
         self.trips.iter()
-            .filter(|&(trip_id, trip)| trip.route_id == route_id)
+            .filter(|&(trip_id, trip)| route_ids.contains(&trip.route_id.as_ref()))
             .flat_map(|(trip_id, trip)| {
                 let stop_times_indexes = self.stop_times.trip_lookup.get(trip_id).unwrap();
 
@@ -91,9 +91,10 @@ impl GtfsMap {
             }).collect()
     }
 
-    pub fn find_trips_by_route(&self, route_id : &str) -> HashMap<&str, &Trip> {
-        let mut ret : HashMap<&str, &Trip> = HashMap::new();
-        // TODO
-        ret
+    pub fn find_trips_by_routes(&self, route_ids : &[&str]) -> BTreeMap<&str, &Trip> {
+        self.trips.iter()
+            .filter(|&(trip_id, trip)| route_ids.contains(&trip.route_id.as_ref()))
+            .map(|(trip_id, trip)| (trip_id.as_ref(), trip))
+            .collect()
     }
 }
