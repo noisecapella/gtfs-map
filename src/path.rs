@@ -12,8 +12,8 @@ impl Clone for Point {
     fn clone(&self) -> Point { *self }
 }
 
-impl std::convert::From<Shape> for Point {
-    fn from(shape: Shape) -> Point {
+impl<'a> std::convert::From<&'a Shape> for Point {
+    fn from(shape: &'a Shape) -> Point {
         Point {
             lat: shape.shape_pt_lat,
             lon: shape.shape_pt_lon,

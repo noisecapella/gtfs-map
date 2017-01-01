@@ -6,6 +6,8 @@ authors = ["George Schneeloch <bostonbusmap@gmail.com>"]
 
 [dependencies]
 csv = "*"
+hyper = "*"
 getopts = "*"
 rusqlite = "*"
 byteorder = "*"
+xml-rs = "*"

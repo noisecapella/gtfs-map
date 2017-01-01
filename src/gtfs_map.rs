@@ -20,29 +20,30 @@ pub struct GtfsMap {
     shapes : BTreeMap<String, Vec<Shape>>,
     trips : BTreeMap<String, Trip>,
     stops : BTreeMap<String, Stop>,
-    stop_times : StopTimes
+    stop_times : StopTimes,
 }
 
 impl GtfsMap {
-    pub fn new(gtfs_path : &Path) -> GtfsMap { 
+    pub fn new(gtfs_path_str : String) -> GtfsMap {
+        let gtfs_path = Path::new(&gtfs_path_str);
         let routes_path = gtfs_path.join("routes.txt");
         let shapes_path = gtfs_path.join("shapes.txt");
         let trips_path = gtfs_path.join("trips.txt");
         let stops_path = gtfs_path.join("stops.txt");
         let stop_times_path = gtfs_path.join("stop_times.txt");
 
-        let routes = thread::spawn(move || Route::make_routes(&routes_path));
-        let shapes = thread::spawn(move || Shape::make_shapes(&shapes_path));
-        let trips = thread::spawn(move || Trip::make_trips(&trips_path));
-        let stops = thread::spawn(move || Stop::make_stops(&stops_path));
-        let stop_times = thread::spawn(move || StopTime::make_stop_times(&stop_times_path));
+        let routes = Route::make_routes(&routes_path);
+        let shapes = Shape::make_shapes(&shapes_path);
+        let trips = Trip::make_trips(&trips_path);
+        let stops = Stop::make_stops(&stops_path);
+        let stop_times = StopTime::make_stop_times(&stop_times_path);
 
         GtfsMap {
-            routes : routes.join().unwrap(),
-            shapes : shapes.join().unwrap(),
-            trips : trips.join().unwrap(),
-            stops : stops.join().unwrap(),
-            stop_times : stop_times.join().unwrap(),
+            routes : routes,
+            shapes : shapes,
+            trips : trips,
+            stops : stops,
+            stop_times : stop_times,
         }
     }
 
@@ -73,6 +74,10 @@ impl GtfsMap {
             .filter(|&(route_id, route)| route.route_type == route_type)
             .map(|(route_id, route)| (route_id.as_ref(), route))
             .collect()
+    }
+
+    pub fn find_stops(&self) -> &BTreeMap<String, Stop> {
+        &self.stops
     }
 
     pub fn find_stops_by_routes(&self, route_ids : &[&str]) -> BTreeMap<&str, &Stop> {

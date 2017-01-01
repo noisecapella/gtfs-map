@@ -3,9 +3,9 @@ use error::Error;
 use route::Route;
 use stop::Stop;
 
-pub fn insert_route(conn: &Connection, route_id: &str, route_title: &str, route_color: i32, index: i32, agency_id: i32, pathblob: &str) -> Result<i32, Error> {
+pub fn insert_route(conn: &Connection, route_id: &str, route_title: &str, route_color: i32, route_opposite_color: i32, index: i32, agency_id: i32, pathblob: &str) -> Result<i32, Error> {
     let color_hex = format!("{:#x}", route_color);
-    let opposite_color_hex = format!("{:#x}", route_color);
+    let opposite_color_hex = format!("{:#x}", route_opposite_color);
 
     let mut statement = try!(conn.prepare("INSERT INTO routes (route, routetitle, color, oppositecolor, listorder, agencyid, pathblob) VALUES ($1, $2, $3, $4, $5, $6, $7)"));
     try!(statement.insert(&[&route_id, &route_title, &color_hex, &opposite_color_hex, &index, &agency_id, &pathblob]));

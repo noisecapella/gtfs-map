@@ -1,6 +1,8 @@
 extern crate getopts;
 extern crate rusqlite;
 extern crate byteorder;
+extern crate hyper;
+extern crate xml;
 
 use gtfs_map::GtfsMap;
 use std::path::Path;
@@ -56,7 +58,7 @@ fn generate(gtfs_map: GtfsMap, connection: Connection, generate_path: &Path) -> 
     let mut index = 0;
     println!("Generating Hubway stops...");
     index = try!(hubway::generate_hubway(&connection, index));
-    let mut stops_inserted: HashSet<&str> = HashSet::new();
+    let mut stops_inserted: HashSet<String> = HashSet::new();
     println!("Generating commuter rail stops...");
     index = try!(mbta::generate_commuter_rail(&connection, index, &gtfs_map, &mut stops_inserted));
     println!("Generating heavy rail stops...");
@@ -90,15 +92,14 @@ fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error>
         panic!("");
     }
 
-    let gtfs_path_str = try!(matches.opt_str("p").ok_or(GtfsMapError("Missing gtfs path".to_owned())));
-    let gtfs_path = Path::new(&gtfs_path_str);
+    let gtfs_path_str = try!(matches.opt_str("p").ok_or(GtfsMapError("Missing gtfs path".to_owned()))).to_string();
     let output_path_str = try!(matches.opt_str("o").ok_or(GtfsMapError("Missing output path".to_owned())));
     let output_path = Path::new(&output_path_str);
 
     let generate_path_str = try!(matches.opt_str("g").ok_or(GtfsMapError("Missing generate path".to_owned())));
     std::fs::remove_file(output_path);
     
-    let gtfs_map = GtfsMap::new(gtfs_path);
+    let gtfs_map = GtfsMap::new(gtfs_path_str);
     let connection = try!(Connection::open(&output_path));
     try!(connection.execute("BEGIN TRANSACTION", &[]));
     Ok((gtfs_map, connection, generate_path_str))
