@@ -21,7 +21,7 @@ impl<'a> std::convert::From<&'a Shape> for Point {
     }
 }
 
-pub fn get_blob_string_from_path(path: &[Vec<Point>]) -> String {
+pub fn get_blob_from_path(path: &[Vec<Point>]) -> Vec<u8> {
     let mut bytearray: Vec<u8> = Vec::new();
 
     fn add_int(bytes: &mut Vec<u8>, x: i32) {
@@ -48,10 +48,5 @@ pub fn get_blob_string_from_path(path: &[Vec<Point>]) -> String {
     };
     
     add_paths(&mut bytearray, path);
-    let mut hex: String = "X'".to_string();
-    for byte in bytearray {
-        hex.push_str(&format!("{:02x}", byte));
-    }
-    hex.push_str("'");
-    return hex;
+    bytearray
 }

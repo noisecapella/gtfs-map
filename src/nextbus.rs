@@ -5,7 +5,7 @@ use db;
 use error::Error;
 use rusqlite::Connection;
 use gtfs_map::GtfsMap;
-use path::{Point, get_blob_string_from_path};
+use path::{Point, get_blob_from_path};
 use simplify_path::simplify_path;
 use std::collections::{HashSet, HashMap};
 use hyper::client::Client;
@@ -150,7 +150,7 @@ fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<S
                     },
                     "route" => {
                         if let Some(&(ref route_id, ref route_title, color, opposite_color)) = current_route.as_ref() {
-                            let pathblob = get_blob_string_from_path(&current_paths);
+                            let pathblob = get_blob_from_path(&current_paths);
                             try!(db::insert_route(conn, route_id, route_title, color, opposite_color, start_order, BUS_AGENCY_ID, &pathblob));
                             current_paths.clear();
                         }

@@ -1,7 +1,7 @@
 use gtfs_map::GtfsMap;
 use rusqlite::Connection;
 use error::Error;
-use path::{Point, get_blob_string_from_path};
+use path::{Point, get_blob_from_path};
 use route::Route;
 use simplify_path::simplify_path;
 use constants::{COMMUTER_RAIL_AGENCY_ID, SUBWAY_AGENCY_ID};
@@ -19,7 +19,7 @@ pub fn add_line(conn: &Connection, startorder: i32, route_ids: &[&str], as_route
             simplify_path(&path)
         }
     ).collect();
-    let pathblob = get_blob_string_from_path(&paths);
+    let pathblob = get_blob_from_path(&paths);
 
     let color = color_override.unwrap_or(route.route_color);
     let opposite_color = color;
