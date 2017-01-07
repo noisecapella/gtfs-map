@@ -30,22 +30,27 @@ pub mod stop;
 pub mod stop_times;
 
 use std::env;
+use std::str;
 use error::Error;
 use error::Error::GtfsMapError;
 
 pub mod constants;
 
 
-fn create_tables(connection: &Connection, generate_path: &Path) -> Result<(), Error> {
+fn create_tables(connection: &Connection) -> Result<(), Error> {
     println!("Creating tables...");
-    let path = &generate_path.join("print_create_tables.py");
-    let mut command = Command::new("python3");
-    let process = command.arg(path);
-    if !try!(process.status()).success() {
-        return Err(GtfsMapError(format!("Unable to run {}", path.to_str().unwrap())));
-    }
-    let output = try!(process.output());
-    for line in String::from_utf8_lossy(&output.stdout).split("\n") {
+    let create_sql = "CREATE TABLE IF NOT EXISTS bounds (route STRING, weekdays INTEGER, start INTEGER, stop INTEGER)
+CREATE TABLE IF NOT EXISTS directions (dirTag STRING PRIMARY KEY, dirNameKey STRING, dirTitleKey STRING, dirRouteKey STRING, useAsUI INTEGER)
+CREATE TABLE IF NOT EXISTS directionsStops (dirTag STRING, tag STRING)
+CREATE TABLE IF NOT EXISTS favorites (tag STRING PRIMARY KEY)
+CREATE TABLE IF NOT EXISTS locations (lat FLOAT, lon FLOAT, name STRING PRIMARY KEY)
+CREATE TABLE IF NOT EXISTS routes (route STRING PRIMARY KEY, color INTEGER, oppositecolor INTEGER, pathblob BLOB, listorder INTEGER, agencyid INTEGER, routetitle STRING)
+CREATE TABLE IF NOT EXISTS stopmapping (route STRING, tag STRING, PRIMARY KEY (route, tag))
+CREATE INDEX IF NOT EXISTS idxstopmappingroute ON stopmapping (route)
+CREATE INDEX IF NOT EXISTS idxstopmappingtag ON stopmapping (tag)
+CREATE TABLE IF NOT EXISTS stops (tag STRING PRIMARY KEY, lat FLOAT, lon FLOAT, title STRING, parent STRING)
+";
+    for line in create_sql.split("\n") {
         let trim_line = line.trim();
         if !trim_line.is_empty() {
             try!(connection.execute(trim_line, &[]));
@@ -54,8 +59,8 @@ fn create_tables(connection: &Connection, generate_path: &Path) -> Result<(), Er
     Ok(())
 }
 
-fn generate(gtfs_map: GtfsMap, connection: Connection, generate_path: &Path) -> Result<(), Error> {
-    try!(create_tables(&connection, generate_path));
+fn generate(gtfs_map: GtfsMap, connection: Connection) -> Result<(), Error> {
+    try!(create_tables(&connection));
     let mut index = 0;
     println!("Generating Hubway stops...");
     index = try!(hubway::generate_hubway(&connection, index));
@@ -78,12 +83,11 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
-fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error> {
+fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection), Error> {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print help menu");
     opts.optopt("p", "path", "Path to GTFS", "GTFS_PATH");
     opts.optopt("o", "output_database", "Path to output sqlite database", "DB_PATH");
-    opts.optopt("g", "generate", "Path to bostonbusmap/tools/generate", "GENERATE_PATH");
 
     let matches = try!(opts.parse(&args[1..]));
     if matches.opt_present("h") {
@@ -97,21 +101,20 @@ fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error>
     let output_path_str = try!(matches.opt_str("o").ok_or(GtfsMapError("Missing output path".to_owned())));
     let output_path = Path::new(&output_path_str);
 
-    let generate_path_str = try!(matches.opt_str("g").ok_or(GtfsMapError("Missing generate path".to_owned())));
     std::fs::remove_file(output_path);
     
     let gtfs_map = GtfsMap::new(gtfs_path_str);
     let connection = try!(Connection::open(&output_path));
     try!(connection.execute("BEGIN TRANSACTION", &[]));
-    Ok((gtfs_map, connection, generate_path_str))
+    Ok((gtfs_map, connection))
 }
 
 fn main()  {
     // TODO: make this useful
     let args : Vec<_> = env::args().collect();
     match parse_args(args) {
-        Ok((gtfs_map, connection, generate_path_str)) => {
-            generate(gtfs_map, connection, &Path::new(&generate_path_str)).unwrap()
+        Ok((gtfs_map, connection)) => {
+            generate(gtfs_map, connection).unwrap()
         }
         Err(err) => {
             panic!(err);
