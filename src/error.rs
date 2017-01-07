@@ -2,6 +2,7 @@ use std;
 use rusqlite;
 use getopts;
 use hyper;
+use csv;
 
 #[derive(Debug)]
 pub enum Error {
@@ -12,6 +13,8 @@ pub enum Error {
     Hyper(hyper::Error),
     ParseInt(std::num::ParseIntError),
     ParseFloat(std::num::ParseFloatError),
+    Csv(csv::Error),
+    Utf8(std::str::Utf8Error),
 }
 
 impl std::error::Error for Error {
@@ -24,6 +27,8 @@ impl std::error::Error for Error {
             Error::Hyper(ref err) => err.description(),
             Error::ParseInt(ref err) => err.description(),
             Error::ParseFloat(ref err) => err.description(),
+            Error::Csv(ref err) => err.description(),
+            Error::Utf8(ref err) => err.description(),
         }
     }
 
@@ -36,6 +41,8 @@ impl std::error::Error for Error {
             Error::Hyper(ref err) => Some(err),
             Error::ParseInt(ref err) => Some(err),
             Error::ParseFloat(ref err) => Some(err),
+            Error::Csv(ref err) => Some(err),
+            Error::Utf8(ref err) => Some(err),
         }
     }
 }
@@ -50,6 +57,8 @@ impl std::fmt::Display for Error {
             Error::Hyper(ref err) => write!(f, "Hyper error: {}", err),
             Error::ParseInt(ref err) => write!(f, "Int parse error: {}", err),
             Error::ParseFloat(ref err) => write!(f, "Float parse error: {}", err),
+            Error::Csv(ref err) => write!(f, "Csv error: {}", err),
+            Error::Utf8(ref err) => write!(f, "Utf8 error: {}", err),
         }
     }
 }
@@ -87,5 +96,17 @@ impl From<std::num::ParseIntError> for Error {
 impl From<std::num::ParseFloatError> for Error {
     fn from(err: std::num::ParseFloatError) -> Error {
         Error::ParseFloat(err)
+    }
+}
+
+impl From<csv::Error> for Error {
+    fn from(err: csv::Error) -> Error {
+        Error::Csv(err)
+    }
+}
+
+impl From<std::str::Utf8Error> for Error {
+    fn from(err: std::str::Utf8Error) -> Error {
+        Error::Utf8(err)
     }
 }

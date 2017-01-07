@@ -26,14 +26,14 @@ pub fn add_line(conn: &Connection, startorder: i32, route_ids: &[&str], as_route
     let routes_added = try!(db::insert_route(conn, as_route, as_route, color, opposite_color, startorder, SUBWAY_AGENCY_ID, &pathblob));
 
     println!("Adding stops...");
-    let stop_rows = gtfs_map.find_stops_by_routes(route_ids);
+    let stop_rows = try!(gtfs_map.find_stops_by_routes(route_ids));
 
     for (stop_id, stop) in stop_rows {
-        if !stops_inserted.contains(stop_id) {
-            try!(db::insert_stop(conn, stop_id, &stop.stop_name, &stop.stop_lat, &stop.stop_lon, &stop.parent_station));
+        if !stops_inserted.contains(&stop_id) {
+            try!(db::insert_stop(conn, &stop_id, &stop.stop_name, &stop.stop_lat, &stop.stop_lon, &stop.parent_station));
             stops_inserted.insert(stop_id.to_string());
         }
-        try!(db::insert_stopmapping(conn, stop_id, as_route));
+        try!(db::insert_stopmapping(conn, &stop_id, as_route));
     }
 
     println!("Adding directions...");

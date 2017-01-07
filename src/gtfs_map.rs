@@ -5,14 +5,18 @@ use std::iter::Filter;
 use std::rc::Rc;
 use std::thread;
 use std::collections::{BTreeMap, HashMap};
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::fs::File;
+use std::io::{BufRead, BufReader, Seek, SeekFrom};
+use std::str;
+
+use csv;
 
 use error::Error;
 use route::Route;
 use shape::Shape;
 use trip::Trip;
 use stop::Stop;
-use stop_times::StopTime;
 use stop_times::StopTimes;
 
 pub struct GtfsMap {
@@ -36,7 +40,7 @@ impl GtfsMap {
         let shapes = Shape::make_shapes(&shapes_path);
         let trips = Trip::make_trips(&trips_path);
         let stops = Stop::make_stops(&stops_path);
-        let stop_times = StopTime::make_stop_times(&stop_times_path);
+        let stop_times = StopTimes::make_stop_times(&stop_times_path).unwrap();
 
         GtfsMap {
             routes : routes,
@@ -80,20 +84,29 @@ impl GtfsMap {
         &self.stops
     }
 
-    pub fn find_stops_by_routes(&self, route_ids : &[&str]) -> BTreeMap<&str, &Stop> {
-        self.trips.iter()
-            .filter(|&(trip_id, trip)| route_ids.contains(&trip.route_id.as_ref()))
-            .flat_map(|(trip_id, trip)| {
-                let stop_times_indexes = self.stop_times.trip_lookup.get(trip_id).unwrap();
+    pub fn find_stops_by_routes(&self, route_ids : &[&str]) -> Result<BTreeMap<String, &Stop>, Error> {
+        let mut ret: BTreeMap<String, &Stop> = BTreeMap::new();
+        let path = self.stop_times.stop_times_path.as_path();
+        let mut f = try!(File::open(path));
+        let mut reader = csv::Reader::from_reader(BufReader::new(f));
 
-                stop_times_indexes.iter()
-                    .map(|i| {
-                        let stop_time = self.stop_times.stop_times.get(*i as usize).unwrap();
-                        let slice = stop_time.stop_id.as_ref();
-                        let stop = self.stops.get(slice).unwrap();
-                        (slice, stop)
-                    })
-            }).collect()
+        let mut counter = 0;
+        for (trip_id, trip) in self.trips.iter() {
+            if !route_ids.contains(&trip.route_id.as_ref()) {
+                continue;
+            }
+
+            let stop_times_indexes = try!(self.stop_times.trip_lookup.get(trip_id).ok_or(Error::GtfsMapError("No trip found in stop_times".to_string())));
+            for pos in stop_times_indexes.iter() {
+                try!(reader.seek(*pos));
+
+                let stop_id = try!(read_csv_row_at_index(&mut reader, 3));
+                        
+                let stop = self.stops.get(&stop_id).unwrap();
+                ret.insert(stop_id, stop);
+            }
+        }
+        Ok(ret)
     }
 
     pub fn find_trips_by_routes(&self, route_ids : &[&str]) -> BTreeMap<&str, &Trip> {
@@ -101,5 +114,29 @@ impl GtfsMap {
             .filter(|&(trip_id, trip)| route_ids.contains(&trip.route_id.as_ref()))
             .map(|(trip_id, trip)| (trip_id.as_ref(), trip))
             .collect()
+    }
+}
+
+fn read_csv_row_at_index(reader: &mut csv::Reader<BufReader<File>>, index: u64) -> Result<String, Error> {
+    let mut field_count = 0;
+    loop {
+        match reader.next_bytes() {
+            csv::NextField::EndOfCsv => {
+                return Err(Error::GtfsMapError("End of csv".to_string()));
+            },
+            csv::NextField::EndOfRecord => {
+                return Err(Error::GtfsMapError("Reached end of record".to_string()));
+            },
+            csv::NextField::Error(err) => {
+                return Err(Error::from(err));
+            },
+            csv::NextField::Data(field) => {
+                if field_count == index {
+                    let s = try!(str::from_utf8(field));
+                    return Ok(s.to_string());
+                }
+                field_count += 1;
+            }
+        };
     }
 }

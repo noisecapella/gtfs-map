@@ -1,3 +1,4 @@
+extern crate csv;
 extern crate getopts;
 extern crate rusqlite;
 extern crate byteorder;
