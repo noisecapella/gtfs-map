@@ -23,7 +23,7 @@ pub fn add_line(conn: &Connection, startorder: i32, route_ids: &[&str], as_route
 
     let color = color_override.unwrap_or(route.route_color);
     let opposite_color = color;
-    let routes_added = try!(db::insert_route(conn, as_route, as_route, color, opposite_color, startorder, SUBWAY_AGENCY_ID, &pathblob));
+    let routes_added = try!(db::insert_route(conn, as_route, as_route, color, opposite_color, startorder, agency_id, &pathblob));
 
     println!("Adding stops...");
     let stop_rows = try!(gtfs_map.find_stops_by_routes(route_ids));
@@ -79,7 +79,7 @@ pub fn generate_commuter_rail(connection: &Connection, startorder: i32, gtfs_map
             &route.route_long_name
         };
 
-        index += try!(add_line(connection, index, &[route_id], route_title, COMMUTER_RAIL_AGENCY_ID, gtfs_map, stops_inserted, Some(purple)));
+        index += try!(add_line(connection, index, &[route_id], route_id, COMMUTER_RAIL_AGENCY_ID, gtfs_map, stops_inserted, Some(purple)));
     }
 
     Ok(index)
