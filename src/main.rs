@@ -70,7 +70,7 @@ fn generate(gtfs_map: GtfsMap, connection: Connection) -> Result<(), Error> {
     println!("Generating heavy rail stops...");
     index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
     println!("Generating nextbus stops...");
-    index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted));
+    //index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted));
     println!("routes inserted: {}", index);
 
     try!(connection.execute("COMMIT", &[]));

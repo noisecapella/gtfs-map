@@ -4,8 +4,8 @@ use byteorder::{BigEndian, WriteBytesExt};
 
 #[derive(Copy, Debug)]
 pub struct Point {
-    pub lat: f32,
-    pub lon: f32,
+    pub lat: f64,
+    pub lon: f64,
 }
 
 impl Clone for Point {
@@ -28,8 +28,8 @@ pub fn get_blob_from_path(path: &[Vec<Point>]) -> Vec<u8> {
         bytes.write_i32::<BigEndian>(x);
     };
 
-    fn add_float(bytes: &mut Vec<u8>, f: f32) {
-        bytes.write_f32::<BigEndian>(f);
+    fn add_float(bytes: &mut Vec<u8>, f: f64) {
+        bytes.write_f32::<BigEndian>(f as f32);
     }
 
     fn add_path(bytes: &mut Vec<u8>, path: &[Point]) {

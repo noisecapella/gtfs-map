@@ -8,8 +8,8 @@ use std::path::Path;
 
 
 pub struct Shape {
-    pub shape_pt_lat : f32,
-    pub shape_pt_lon : f32,
+    pub shape_pt_lat : f64,
+    pub shape_pt_lon : f64,
     pub shape_pt_sequence : u32,
     pub shape_dist_traveled : String
 }

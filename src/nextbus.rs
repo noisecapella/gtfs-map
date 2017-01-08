@@ -136,8 +136,8 @@ fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<S
                     "point" => {
                         let lat_string = try!(get_attribute(&attributes, "lat"));
                         let lon_string = try!(get_attribute(&attributes, "lon"));
-                        let lat: f32 = try!(lat_string.parse());
-                        let lon: f32 = try!(lon_string.parse());
+                        let lat: f64 = try!(lat_string.parse());
+                        let lon: f64 = try!(lon_string.parse());
                         current_path_points.push(Point { lat: lat, lon: lon });
                     },
                     _ => {}
