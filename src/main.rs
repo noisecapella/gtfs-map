@@ -39,16 +39,16 @@ pub mod constants;
 
 fn create_tables(connection: &Connection) -> Result<(), Error> {
     println!("Creating tables...");
-    let create_sql = "CREATE TABLE IF NOT EXISTS bounds (route STRING, weekdays INTEGER, start INTEGER, stop INTEGER)
-CREATE TABLE IF NOT EXISTS directions (dirTag STRING PRIMARY KEY, dirNameKey STRING, dirTitleKey STRING, dirRouteKey STRING, useAsUI INTEGER)
-CREATE TABLE IF NOT EXISTS directionsStops (dirTag STRING, tag STRING)
-CREATE TABLE IF NOT EXISTS favorites (tag STRING PRIMARY KEY)
-CREATE TABLE IF NOT EXISTS locations (lat FLOAT, lon FLOAT, name STRING PRIMARY KEY)
-CREATE TABLE IF NOT EXISTS routes (route STRING PRIMARY KEY, color INTEGER, oppositecolor INTEGER, pathblob BLOB, listorder INTEGER, agencyid INTEGER, routetitle STRING)
-CREATE TABLE IF NOT EXISTS stopmapping (route STRING, tag STRING, PRIMARY KEY (route, tag))
+    let create_sql = "CREATE TABLE IF NOT EXISTS bounds (route TEXT, weekdays INTEGER, start INTEGER, stop INTEGER)
+CREATE TABLE IF NOT EXISTS directions (dirTag TEXT PRIMARY KEY, dirNameKey TEXT, dirTitleKey TEXT, dirRouteKey TEXT, useAsUI INTEGER)
+CREATE TABLE IF NOT EXISTS directionsStops (dirTag TEXT, tag TEXT)
+CREATE TABLE IF NOT EXISTS favorites (tag TEXT PRIMARY KEY)
+CREATE TABLE IF NOT EXISTS locations (lat FLOAT, lon FLOAT, name TEXT PRIMARY KEY)
+CREATE TABLE IF NOT EXISTS routes (route TEXT PRIMARY KEY, color INTEGER, oppositecolor INTEGER, pathblob BLOB, listorder INTEGER, agencyid INTEGER, routetitle TEXT)
+CREATE TABLE IF NOT EXISTS stopmapping (route TEXT, tag TEXT, PRIMARY KEY (route, tag))
 CREATE INDEX IF NOT EXISTS idxstopmappingroute ON stopmapping (route)
 CREATE INDEX IF NOT EXISTS idxstopmappingtag ON stopmapping (tag)
-CREATE TABLE IF NOT EXISTS stops (tag STRING PRIMARY KEY, lat FLOAT, lon FLOAT, title STRING, parent STRING)
+CREATE TABLE IF NOT EXISTS stops (tag TEXT PRIMARY KEY, lat FLOAT, lon FLOAT, title TEXT, parent TEXT)
 ";
     for line in create_sql.split("\n") {
         let trim_line = line.trim();
