@@ -5,6 +5,7 @@ use std::iter::Filter;
 use std::rc::Rc;
 use std::collections::BTreeMap;
 use std::path::Path;
+use error::Error;
 
 
 pub struct Shape {
@@ -15,7 +16,7 @@ pub struct Shape {
 }
 
 impl Shape {
-    pub fn make_shapes(shapes_path : &Path) -> BTreeMap<String, Vec<Shape>> {
+    pub fn make_shapes(shapes_path : &Path) -> Result<BTreeMap<String, Vec<Shape>>, Error> {
         let mut reader = csv::Reader::from_file(shapes_path).unwrap();
 
         let mut map : BTreeMap<String, Vec<Shape>> = BTreeMap::new();
@@ -25,8 +26,8 @@ impl Shape {
                 (String, String, String, u32, String) = record.unwrap();
 
             let shape = Shape {
-                shape_pt_lat : shape_pt_lat.parse().unwrap(),
-                shape_pt_lon : shape_pt_lon.parse().unwrap(),
+                shape_pt_lat : try!(shape_pt_lat.parse()),
+                shape_pt_lon : try!(shape_pt_lon.parse()),
                 shape_pt_sequence : shape_pt_sequence,
                 shape_dist_traveled : shape_dist_traveled
             };
@@ -35,6 +36,6 @@ impl Shape {
             list.push(shape);
         }
         println!("Finished reading shapes");
-        map
+        Ok(map)
     }
 }

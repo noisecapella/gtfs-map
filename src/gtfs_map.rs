@@ -28,7 +28,7 @@ pub struct GtfsMap {
 }
 
 impl GtfsMap {
-    pub fn new(gtfs_path_str : String) -> GtfsMap {
+    pub fn new(gtfs_path_str : String) -> Result<GtfsMap, Error> {
         let gtfs_path = Path::new(&gtfs_path_str);
         let routes_path = gtfs_path.join("routes.txt");
         let shapes_path = gtfs_path.join("shapes.txt");
@@ -37,18 +37,18 @@ impl GtfsMap {
         let stop_times_path = gtfs_path.join("stop_times.txt");
 
         let routes = Route::make_routes(&routes_path);
-        let shapes = Shape::make_shapes(&shapes_path);
+        let shapes = try!(Shape::make_shapes(&shapes_path));
         let trips = Trip::make_trips(&trips_path);
         let stops = Stop::make_stops(&stops_path);
-        let stop_times = StopTimes::make_stop_times(&stop_times_path).unwrap();
+        let stop_times = try!(StopTimes::make_stop_times(&stop_times_path));
 
-        GtfsMap {
+        Ok(GtfsMap {
             routes : routes,
             shapes : shapes,
             trips : trips,
             stops : stops,
             stop_times : stop_times,
-        }
+        })
     }
 
     pub fn find_routes_by_name(&self, name : &str) -> BTreeMap<&str, &Route>
@@ -64,13 +64,32 @@ impl GtfsMap {
         self.routes.get(id).ok_or(Error::GtfsMapError("No route found".to_owned()))
     }
 
-    pub fn find_shapes_by_routes(&self, route_ids : &[&str]) -> BTreeMap<&str, &Vec<Shape>> {
-        self.trips.iter()
-            .filter(|&(trip_id, trip)| route_ids.contains(&trip.route_id.as_ref()))
-            .map(|(trip_id, trip)| {
-                let shape_id_slice = trip.shape_id.as_ref();
-                (shape_id_slice, self.shapes.get(shape_id_slice).unwrap())
-            }).collect()
+    pub fn find_shapes_by_routes(&self, route_ids : &[&str]) -> Result<BTreeMap<&str, Vec<Shape>>, Error> {
+        let mut shape_map: BTreeMap<&str, Vec<Shape>> = BTreeMap::new();
+
+        for (_, trip) in self.trips.iter() {
+            if !route_ids.contains(&trip.route_id.as_ref()) {
+                continue;
+            }
+            let shape_id_slice = trip.shape_id.as_ref();
+            let shapes_ref = try!(self.shapes.get(shape_id_slice).ok_or(Error::GtfsMapError("No shape found".to_string())));
+            let mut shapes: Vec<Shape> = Vec::new();
+            for shape in shapes_ref.iter() {
+                shapes.push(Shape {
+                    shape_pt_lat: shape.shape_pt_lat,
+                    shape_pt_lon: shape.shape_pt_lon,
+                    shape_pt_sequence: shape.shape_pt_sequence,
+                    shape_dist_traveled: shape.shape_dist_traveled.clone(),
+                });
+            }
+            shapes.sort_by(|a, b| a.shape_pt_sequence.cmp(&b.shape_pt_sequence));
+            shape_map.insert(
+                shape_id_slice,
+                shapes
+            );
+        }
+
+        Ok(shape_map)
     }
 
     pub fn find_routes_by_route_type(&self, route_type : i32) -> BTreeMap<&str, &Route> {

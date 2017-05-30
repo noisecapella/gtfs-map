@@ -18,7 +18,7 @@ fn shortest_distance_to_segment(point: &Point, line: &(&Point, &Point)) -> f64 {
 
     let divisor = f64::sqrt(f64::powi(y2-y1, 2) + f64::powi(x2-x1, 2));
     if divisor == 0. {
-        999999.
+        f64::INFINITY
     } else {
         f64::abs((y2-y1)*x0 - (x2-x1)*y0 + x2*y1 - y2*x1) / divisor
     }

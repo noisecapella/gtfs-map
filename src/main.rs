@@ -70,7 +70,7 @@ fn generate(gtfs_map: GtfsMap, connection: Connection) -> Result<(), Error> {
     println!("Generating heavy rail stops...");
     index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
     println!("Generating nextbus stops...");
-    //index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted));
+    index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted));
     println!("routes inserted: {}", index);
 
     try!(connection.execute("COMMIT", &[]));
@@ -101,9 +101,9 @@ fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection), Error> {
     let output_path_str = try!(matches.opt_str("o").ok_or(GtfsMapError("Missing output path".to_owned())));
     let output_path = Path::new(&output_path_str);
 
-    std::fs::remove_file(output_path);
-    
-    let gtfs_map = GtfsMap::new(gtfs_path_str);
+    let _ = std::fs::remove_file(output_path);
+
+    let gtfs_map = try!(GtfsMap::new(gtfs_path_str));
     let connection = try!(Connection::open(&output_path));
     try!(connection.execute("BEGIN TRANSACTION", &[]));
     Ok((gtfs_map, connection))
