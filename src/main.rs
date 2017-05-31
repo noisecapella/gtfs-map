@@ -62,8 +62,6 @@ CREATE TABLE IF NOT EXISTS stops (tag TEXT PRIMARY KEY, lat FLOAT, lon FLOAT, ti
 fn generate(gtfs_map: GtfsMap, connection: Connection) -> Result<(), Error> {
     try!(create_tables(&connection));
     let mut index = 0;
-    println!("Generating Hubway stops...");
-    index = try!(hubway::generate_hubway(&connection, index));
     let mut stops_inserted: HashSet<String> = HashSet::new();
     println!("Generating commuter rail stops...");
     index = try!(mbta::generate_commuter_rail(&connection, index, &gtfs_map, &mut stops_inserted));
@@ -71,6 +69,8 @@ fn generate(gtfs_map: GtfsMap, connection: Connection) -> Result<(), Error> {
     index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
     println!("Generating nextbus stops...");
     index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted));
+    println!("Generating Hubway stops...");
+    index = try!(hubway::generate_hubway(&connection, index));
     println!("routes inserted: {}", index);
 
     try!(connection.execute("COMMIT", &[]));
