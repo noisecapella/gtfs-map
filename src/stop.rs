@@ -27,8 +27,11 @@ impl Stop {
         let mut map : BTreeMap<String, Stop> = BTreeMap::new();
 
         for record in reader.decode() {
+            let unwrapped = record.unwrap();
+            println!("printing...");
+            println!("stop {:?}", unwrapped);
             let (stop_id, stop_code, stop_name, stop_desc, stop_lat, stop_lon, zone_id, stop_url, location_type, parent_station) :
-                (String, String, String, String, String, String, String, String, u32, String) = record.unwrap();
+                (String, String, String, String, String, String, String, String, u32, String) = unwrapped;
 
             let stop = Stop {
                 stop_code : stop_code,
