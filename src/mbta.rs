@@ -61,6 +61,8 @@ pub fn generate_heavy_rail(connection: &Connection, startorder: i32, gtfs_map: &
         (vec!["Blue"], "Blue"),
         (vec!["Green-B", "Green-C", "Green-D", "Green-E"], "Green"),
         (vec!["Mattapan"], "Mattapan"),
+        (vec!["712"], "712"),
+        (vec!["713"], "713"),
     ].iter() {
         index += try!(add_line(connection, index, &route_ids, as_route, as_route, SUBWAY_AGENCY_ID, gtfs_map, stops_inserted, None));
     }
