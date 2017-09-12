@@ -21,8 +21,8 @@ pub struct Stop {
 
 impl Stop {
 
-    pub fn make_stops(routes_path : &Path) -> BTreeMap<String, Stop> {
-        let mut reader = csv::Reader::from_file(routes_path).unwrap();
+    pub fn make_stops(stops_path : &Path) -> BTreeMap<String, Stop> {
+        let mut reader = csv::Reader::from_file(stops_path).unwrap();
 
         let mut map : BTreeMap<String, Stop> = BTreeMap::new();
 
@@ -30,8 +30,8 @@ impl Stop {
             let unwrapped = record.unwrap();
             println!("printing...");
             println!("stop {:?}", unwrapped);
-            let (stop_id, stop_code, stop_name, stop_desc, stop_lat, stop_lon, zone_id, stop_url, location_type, parent_station) :
-                (String, String, String, String, String, String, String, String, u32, String) = unwrapped;
+            let (stop_id, stop_code, stop_name, stop_desc, stop_lat, stop_lon, zone_id, stop_url, location_type, parent_station, wheelchair_boarding) :
+                (String, String, String, String, String, String, String, String, String, String, u32) = unwrapped;
 
             let stop = Stop {
                 stop_code : stop_code,
@@ -41,7 +41,7 @@ impl Stop {
                 stop_lon : stop_lon,
                 zone_id : zone_id,
                 stop_url : stop_url,
-                location_type : location_type,
+                location_type : 1,
                 parent_station : parent_station
             };
             map.insert(stop_id, stop);
