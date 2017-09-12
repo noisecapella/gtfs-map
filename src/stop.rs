@@ -26,8 +26,11 @@ struct StopCsv {
     stop_desc : String,
     stop_lat : String,
     stop_lon : String,
+    zone_id: String,
     stop_url : String,
-    parent_station : String
+    location_type: String,
+    parent_station : String,
+    wheelchair_boarding: String
 }
 
 impl Stop {
