@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS stops (tag TEXT PRIMARY KEY, lat FLOAT, lon FLOAT, ti
     Ok(())
 }
 
-fn generate(gtfs_map: GtfsMap, connection: Connection) -> Result<(), Error> {
+fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> Result<(), Error> {
     try!(create_tables(&connection));
     let mut index = 0;
     let mut stops_inserted: HashSet<String> = HashSet::new();
@@ -70,7 +70,7 @@ fn generate(gtfs_map: GtfsMap, connection: Connection) -> Result<(), Error> {
     println!("Generating heavy rail stops...");
     index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
     println!("Generating nextbus stops...");
-    index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted));
+    index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency));
     println!("Generating Hubway stops...");
     index = try!(hubway::generate_hubway(&connection, index));
     println!("routes inserted: {}", index);
@@ -85,11 +85,12 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
-fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection), Error> {
+fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error> {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print help menu");
     opts.optopt("p", "path", "Path to GTFS", "GTFS_PATH");
     opts.optopt("o", "output_database", "Path to output sqlite database", "DB_PATH");
+    opts.optopt("a", "nextbus_agency", "The agency to use when querying nextbus data", "NEXTBUS_AGENCY");
 
     let matches = try!(opts.parse(&args[1..]));
     if matches.opt_present("h") {
@@ -102,21 +103,22 @@ fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection), Error> {
     let gtfs_path_str = try!(matches.opt_str("p").ok_or(GtfsMapError("Missing gtfs path".to_owned()))).to_string();
     let output_path_str = try!(matches.opt_str("o").ok_or(GtfsMapError("Missing output path".to_owned())));
     let output_path = Path::new(&output_path_str);
+    let nextbus_agency = matches.opt_str("a").ok_or(GtfsMapError("Missing nextbus_agency".to_string()))?;
 
     let _ = std::fs::remove_file(output_path);
 
     let gtfs_map = try!(GtfsMap::new(gtfs_path_str));
     let connection = try!(Connection::open(&output_path));
     try!(connection.execute("BEGIN TRANSACTION", &[]));
-    Ok((gtfs_map, connection))
+    Ok((gtfs_map, connection, nextbus_agency))
 }
 
 fn main()  {
     // TODO: make this useful
     let args : Vec<_> = env::args().collect();
     match parse_args(args) {
-        Ok((gtfs_map, connection)) => {
-            generate(gtfs_map, connection).unwrap()
+        Ok((gtfs_map, connection, nextbus_agency)) => {
+            generate(gtfs_map, connection, &nextbus_agency).unwrap()
         }
         Err(err) => {
             panic!(err);

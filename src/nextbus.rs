@@ -13,13 +13,13 @@ use xml::reader::{EventReader, XmlEvent};
 use xml::name::OwnedName;
 use xml::attribute::OwnedAttribute;
 
-use constants::{NEXTBUS_AGENCY, BUS_AGENCY_ID};
+use constants::{BUS_AGENCY_ID};
 
-fn make_url(command: &str, route_name: Option<&str>) -> String {
+fn make_url(command: &str, route_name: Option<&str>, nextbus_agency: &str) -> String {
     format!(
         "http://{prefix}.nextbus.com/service/publicXMLFeed?a={agency}&command={command}{other}",
         prefix="webservices",
-        agency=NEXTBUS_AGENCY,
+        agency=nextbus_agency,
         command=command,
         other=(match route_name {
             Some(route) => format!("&r={}&verbose", route),
@@ -38,8 +38,8 @@ fn get_attribute<'a>(attributes: &'a [OwnedAttribute], key: &str) -> Result<&'a 
     Err(Error::GtfsMapError("Missing attribute".to_string()))
 }
 
-fn get_routes() -> Result<Vec<(String, String)>, Error> {
-    let route_list_url = make_url("routeList", None);
+fn get_routes(nextbus_agency: &str) -> Result<Vec<(String, String)>, Error> {
+    let route_list_url = make_url("routeList", None, nextbus_agency);
     
     let client = Client::new();
     let route_list_data = try!(client.get(&route_list_url).send());
@@ -61,16 +61,16 @@ fn get_routes() -> Result<Vec<(String, String)>, Error> {
     Ok(routes)
 }
 
-fn make_route_config_url(route_name: &str) -> String {
-    make_url("routeConfig", Some(route_name))
+fn make_route_config_url(route_name: &str, nextbus_agency: &str) -> String {
+    make_url("routeConfig", Some(route_name), nextbus_agency)
 }
 
-fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<String>, parents: &HashMap<&str, &str>, start_order: i32) -> Result<i32, Error> {
+fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<String>, parents: &HashMap<&str, &str>, start_order: i32, nextbus_agency: &str) -> Result<i32, Error> {
     let client = Client::new();
-    let mut maybe_route_config_data = client.get(&make_route_config_url(route_name)).send();
+    let mut maybe_route_config_data = client.get(&make_route_config_url(route_name, nextbus_agency)).send();
     if let Err(_) = maybe_route_config_data {
         // try one more time
-        maybe_route_config_data = client.get(&make_route_config_url(route_name)).send();
+        maybe_route_config_data = client.get(&make_route_config_url(route_name, nextbus_agency)).send();
     }
     let route_config_data = try!(maybe_route_config_data);
 
@@ -177,18 +177,18 @@ fn make_parents_map<'a>(gtfs_map: &'a GtfsMap) -> HashMap<&'a str, &'a str> {
     ).collect()
 }
 
-pub fn generate(conn: &Connection, start_order: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>) -> Result<i32, Error> {
+pub fn generate(conn: &Connection, start_order: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>, nextbus_agency: &str) -> Result<i32, Error> {
     let mut index = start_order;
 
     let parents = make_parents_map(gtfs_map);
     
     println!("Downloading NextBus route data (this will take 10 or 20 minutes)...");
-    let routes = try!(get_routes());
+    let routes = try!(get_routes(nextbus_agency));
 
     for (route_name, route_title) in routes {
         println!("{}...", route_title);
 
-        index += try!(add_route(conn, &route_name, stops_inserted, &parents, index));
+        index += try!(add_route(conn, &route_name, stops_inserted, &parents, index, nextbus_agency));
 
         // NextBus rate limiting
         thread::sleep(time::Duration::from_secs(3));
