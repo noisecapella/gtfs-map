@@ -12,7 +12,6 @@ pub struct Trip {
     pub route_id : String,
     pub service_id : String,
     pub trip_headsign : String,
-    pub trip_short_name : String,
     pub direction_id : u32,
     pub block_id : String,
     pub shape_id : String
@@ -24,7 +23,6 @@ struct TripCsv {
     route_id: String,
     service_id: String,
     trip_headsign: String,
-    trip_short_name: String,
     direction_id: u32,
     block_id: String,
     shape_id: String,
@@ -44,7 +42,6 @@ impl Trip {
                 route_id : row.route_id,
                 service_id : row.service_id,
                 trip_headsign: row.trip_headsign,
-                trip_short_name : row.trip_short_name,
                 direction_id : row.direction_id,
                 block_id : row.block_id,
                 shape_id : row.shape_id

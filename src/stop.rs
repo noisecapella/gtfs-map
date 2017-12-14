@@ -14,9 +14,7 @@ pub struct Stop {
     pub stop_desc : String,
     pub stop_lat : String,
     pub stop_lon : String,
-    pub zone_id : String,
     pub stop_url : String,
-    pub location_type : u32,
     pub parent_station : String
 }
 
@@ -28,9 +26,7 @@ struct StopCsv {
     stop_desc : String,
     stop_lat : String,
     stop_lon : String,
-    zone_id : String,
     stop_url : String,
-    location_type : u32,
     parent_station : String
 }
 
@@ -51,9 +47,7 @@ impl Stop {
                 stop_desc : row.stop_desc,
                 stop_lat : row.stop_lat,
                 stop_lon : row.stop_lon,
-                zone_id : row.zone_id,
                 stop_url : row.stop_url,
-                location_type : row.location_type,
                 parent_station : row.parent_station
             };
             map.insert(row.stop_id, stop);

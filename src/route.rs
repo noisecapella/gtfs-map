@@ -27,7 +27,7 @@ pub struct Route {
 #[derive(Debug, Deserialize)]
 struct RouteCsv {
     route_id: String,
-    agency_id: String,
+    agency_id: Option<String>,
     route_short_name: String,
     route_long_name: String,
     route_desc: String,
@@ -51,7 +51,10 @@ impl Route {
             let route_id = row.route_id.to_string();
 
             let route = Route {
-                agency_id : row.agency_id,
+                agency_id : match row.agency_id {
+                    Some(agency_id) => agency_id,
+                    None => "1".to_string()
+                },
                 route_short_name : row.route_short_name,
                 route_long_name : row.route_long_name,
                 route_desc : row.route_desc,

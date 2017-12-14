@@ -12,7 +12,6 @@ pub struct Shape {
     pub shape_pt_lat : f64,
     pub shape_pt_lon : f64,
     pub shape_pt_sequence : u32,
-    pub shape_dist_traveled : String
 }
 
 #[derive(Debug, Deserialize)]
@@ -21,7 +20,6 @@ pub struct ShapeCsv {
     shape_pt_lat : f64,
     shape_pt_lon : f64,
     shape_pt_sequence : u32,
-    shape_dist_traveled : String
 }
 
 impl Shape {
@@ -32,14 +30,13 @@ impl Shape {
         let mut map : BTreeMap<String, Vec<Shape>> = BTreeMap::new();
 
         for record in reader.deserialize() {
-            let row: ShapeCsv = record?;
+            let row: ShapeCsv = record.unwrap();
 
             let mut list = map.entry(row.shape_id).or_insert(vec![]);
             list.push(Shape {
                 shape_pt_lat: row.shape_pt_lat,
                 shape_pt_lon: row.shape_pt_lon,
                 shape_pt_sequence: row.shape_pt_sequence,
-                shape_dist_traveled: row.shape_dist_traveled,
             });
         }
         println!("Finished reading shapes");

@@ -79,7 +79,6 @@ impl GtfsMap {
                     shape_pt_lat: shape.shape_pt_lat,
                     shape_pt_lon: shape.shape_pt_lon,
                     shape_pt_sequence: shape.shape_pt_sequence,
-                    shape_dist_traveled: shape.shape_dist_traveled.clone(),
                 });
             }
             shapes.sort_by(|a, b| a.shape_pt_sequence.cmp(&b.shape_pt_sequence));
