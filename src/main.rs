@@ -4,6 +4,8 @@ extern crate rusqlite;
 extern crate byteorder;
 extern crate hyper;
 extern crate xml;
+#[macro_use]
+extern crate serde_derive;
 
 use gtfs_map::GtfsMap;
 use std::path::Path;

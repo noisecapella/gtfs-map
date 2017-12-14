@@ -1,6 +1,7 @@
 extern crate csv;
 use std::collections::HashSet;
 use std::iter::Skip;
+use std::fs::File;
 use std::io::Lines;
 use std::iter::Filter;
 use std::rc::Rc;
@@ -19,32 +20,43 @@ pub struct Stop {
     pub parent_station : String
 }
 
+#[derive(Debug, Deserialize)]
+struct StopCsv {
+    stop_id: String,
+    stop_code : String,
+    stop_name : String,
+    stop_desc : String,
+    stop_lat : String,
+    stop_lon : String,
+    zone_id : String,
+    stop_url : String,
+    location_type : u32,
+    parent_station : String
+}
+
 impl Stop {
 
-    pub fn make_stops(routes_path : &Path) -> BTreeMap<String, Stop> {
-        let mut reader = csv::Reader::from_file(routes_path).unwrap();
+    pub fn make_stops(stops_path : &Path) -> BTreeMap<String, Stop> {
+        let file = File::open(stops_path).unwrap();
+        let mut reader = csv::Reader::from_reader(file);
 
         let mut map : BTreeMap<String, Stop> = BTreeMap::new();
 
-        for record in reader.decode() {
-            let unwrapped = record.unwrap();
-            println!("printing...");
-            println!("stop {:?}", unwrapped);
-            let (stop_id, stop_code, stop_name, stop_desc, stop_lat, stop_lon, zone_id, stop_url, location_type, parent_station) :
-                (String, String, String, String, String, String, String, String, u32, String) = unwrapped;
+        for record in reader.deserialize() {
+            let row: StopCsv = record.unwrap();
 
             let stop = Stop {
-                stop_code : stop_code,
-                stop_name : stop_name,
-                stop_desc : stop_desc,
-                stop_lat : stop_lat,
-                stop_lon : stop_lon,
-                zone_id : zone_id,
-                stop_url : stop_url,
-                location_type : location_type,
-                parent_station : parent_station
+                stop_code : row.stop_code,
+                stop_name : row.stop_name,
+                stop_desc : row.stop_desc,
+                stop_lat : row.stop_lat,
+                stop_lon : row.stop_lon,
+                zone_id : row.zone_id,
+                stop_url : row.stop_url,
+                location_type : row.location_type,
+                parent_station : row.parent_station
             };
-            map.insert(stop_id, stop);
+            map.insert(row.stop_id, stop);
         }
         println!("Finished reading stops");
         map

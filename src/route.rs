@@ -1,5 +1,8 @@
 extern crate csv;
+
 use std::collections::HashSet;
+use std::error::Error;
+use std::fs::File;
 use std::iter::Skip;
 use std::io::Lines;
 use std::iter::Filter;
@@ -7,6 +10,9 @@ use std::rc::Rc;
 use std::collections::BTreeMap;
 
 use std::path::Path;
+
+use common::read_header;
+
 pub struct Route {
     pub agency_id : String,
     pub route_short_name : String,
@@ -18,28 +24,43 @@ pub struct Route {
     pub route_text_color : i32
 }
 
+#[derive(Debug, Deserialize)]
+struct RouteCsv {
+    route_id: String,
+    agency_id: String,
+    route_short_name: String,
+    route_long_name: String,
+    route_desc: String,
+    route_type: i32,
+    route_url: String,
+    route_color: String,
+}
+
+
 impl Route {
 
     pub fn make_routes(routes_path : &Path) -> BTreeMap<String, Route> {
-        let mut reader = csv::Reader::from_file(routes_path).unwrap();
-
+        let file = File::open(routes_path).unwrap();
+        let mut reader = csv::Reader::from_reader(file);
         let mut map : BTreeMap<String, Route> = BTreeMap::new();
 
-        for record in reader.decode() {
-            let (route_id, agency_id, route_short_name, route_long_name, route_desc, route_type, route_url, route_color, route_text_color) : 
-                (String, String, String, String, String, i32, String, String, String) = record.unwrap();
+        for record in reader.deserialize() {
+            let row: RouteCsv = record.unwrap();
+
+            let route_color = i32::from_str_radix(&row.route_color, 16).unwrap_or(0);
+            let route_id = row.route_id.to_string();
 
             let route = Route {
-                agency_id : agency_id,
-                route_short_name : route_short_name,
-                route_long_name : route_long_name,
-                route_desc : route_desc,
-                route_type : route_type,
-                route_url : route_url,
-                route_color : i32::from_str_radix(&route_color, 16).unwrap_or(0),
-                route_text_color : i32::from_str_radix(&route_color, 16).unwrap_or(0)
+                agency_id : row.agency_id,
+                route_short_name : row.route_short_name,
+                route_long_name : row.route_long_name,
+                route_desc : row.route_desc,
+                route_type : row.route_type,
+                route_url : row.route_url,
+                route_color : route_color,
+                route_text_color : route_color,
             };
-            map.insert(route_id, route);
+            map.insert(route_id.to_string(), route);
         }
         println!("Finished reading routes");
         map

@@ -115,11 +115,14 @@ impl GtfsMap {
                 continue;
             }
 
+            let stop_id_index = *self.stop_times.field_indexes.get("stop_id").unwrap();
             let stop_times_indexes = try!(self.stop_times.trip_lookup.get(trip_id).ok_or(Error::GtfsMapError("No trip found in stop_times".to_string())));
             for pos in stop_times_indexes.iter() {
-                try!(reader.seek(*pos));
+                try!(reader.seek(pos.clone()));
 
-                let stop_id = try!(read_csv_row_at_index(&mut reader, 3));
+                let mut row = csv::StringRecord::new();
+                reader.read_record(&mut row);
+                let stop_id = row[stop_id_index].to_string();
                         
                 let stop = self.stops.get(&stop_id).unwrap();
                 ret.insert(stop_id, stop);
@@ -133,29 +136,5 @@ impl GtfsMap {
             .filter(|&(trip_id, trip)| route_ids.contains(&trip.route_id.as_ref()))
             .map(|(trip_id, trip)| (trip_id.as_ref(), trip))
             .collect()
-    }
-}
-
-fn read_csv_row_at_index(reader: &mut csv::Reader<BufReader<File>>, index: u64) -> Result<String, Error> {
-    let mut field_count = 0;
-    loop {
-        match reader.next_bytes() {
-            csv::NextField::EndOfCsv => {
-                return Err(Error::GtfsMapError("End of csv".to_string()));
-            },
-            csv::NextField::EndOfRecord => {
-                return Err(Error::GtfsMapError("Reached end of record".to_string()));
-            },
-            csv::NextField::Error(err) => {
-                return Err(Error::from(err));
-            },
-            csv::NextField::Data(field) => {
-                if field_count == index {
-                    let s = try!(str::from_utf8(field));
-                    return Ok(s.to_string());
-                }
-                field_count += 1;
-            }
-        };
     }
 }

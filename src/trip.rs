@@ -1,5 +1,6 @@
 extern crate csv;
 use std::collections::HashSet;
+use std::fs::File;
 use std::iter::Skip;
 use std::io::Lines;
 use std::iter::Filter;
@@ -17,26 +18,38 @@ pub struct Trip {
     pub shape_id : String
 }
 
+#[derive(Debug, Deserialize)]
+struct TripCsv {
+    trip_id: String,
+    route_id: String,
+    service_id: String,
+    trip_headsign: String,
+    trip_short_name: String,
+    direction_id: u32,
+    block_id: String,
+    shape_id: String,
+}
+
 impl Trip {
     pub fn make_trips(trips_path : &Path) -> BTreeMap<String, Trip> {
-        let mut reader = csv::Reader::from_file(trips_path).unwrap();
+        let file = File::open(trips_path).unwrap();
+        let mut reader = csv::Reader::from_reader(file);
 
         let mut map : BTreeMap<String, Trip> = BTreeMap::new();
 
-        for record in reader.decode() {
-            let (route_id, service_id, trip_id, trip_headsign, trip_short_name, direction_id, block_id, shape_id) :
-                (String, String, String, String, String, u32, String, String) = record.unwrap();
+        for record in reader.deserialize() {
+            let row: TripCsv = record.unwrap();
 
             let trip = Trip {
-                route_id : route_id,
-                service_id : service_id,
-                trip_headsign: trip_headsign,
-                trip_short_name : trip_short_name,
-                direction_id : direction_id,
-                block_id : block_id,
-                shape_id : shape_id
+                route_id : row.route_id,
+                service_id : row.service_id,
+                trip_headsign: row.trip_headsign,
+                trip_short_name : row.trip_short_name,
+                direction_id : row.direction_id,
+                block_id : row.block_id,
+                shape_id : row.shape_id
             };
-            map.insert(trip_id, trip);
+            map.insert(row.trip_id, trip);
         }
         println!("Finished reading trips");
         map
