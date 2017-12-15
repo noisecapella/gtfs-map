@@ -1,17 +1,9 @@
 extern crate csv;
 
-use std::collections::HashSet;
-use std::error::Error;
 use std::fs::File;
-use std::iter::Skip;
-use std::io::Lines;
-use std::iter::Filter;
-use std::rc::Rc;
 use std::collections::BTreeMap;
 
 use std::path::Path;
-
-use common::read_header;
 
 pub struct Route {
     pub agency_id : String,

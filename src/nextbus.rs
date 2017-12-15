@@ -1,5 +1,4 @@
 use std::{thread, time};
-use std;
 
 use db;
 use error::Error;
@@ -10,7 +9,6 @@ use simplify_path::simplify_path;
 use std::collections::{HashSet, HashMap};
 use hyper::client::Client;
 use xml::reader::{EventReader, XmlEvent};
-use xml::name::OwnedName;
 use xml::attribute::OwnedAttribute;
 
 use constants::{BUS_AGENCY_ID};
@@ -77,7 +75,6 @@ fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<S
     let parser = EventReader::new(route_config_data);
     let mut in_direction = false;
     let mut current_route: Option<(String, String, i32, i32)> = None;
-    let mut in_path = false;
     let mut current_path_points: Vec<Point> = vec![];
     let mut current_paths: Vec<Vec<Point>> = vec![];
     for event in parser {
@@ -130,9 +127,6 @@ fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<S
                             try!(db::insert_direction(conn, dir_tag, dir_title, route_id, dir_name, use_for_ui));
                         }
                     },
-                    "path" => {
-                        in_path = true;
-                    },
                     "point" => {
                         let lat_string = try!(get_attribute(&attributes, "lat"));
                         let lon_string = try!(get_attribute(&attributes, "lon"));
@@ -157,7 +151,6 @@ fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<S
                         current_route = None;
                     },
                     "path" => {
-                        in_path = false;
                         current_paths.push(simplify_path(&current_path_points));
                         current_path_points.clear();
                     },
@@ -178,6 +171,7 @@ fn make_parents_map<'a>(gtfs_map: &'a GtfsMap) -> HashMap<&'a str, &'a str> {
 }
 
 pub fn generate(conn: &Connection, start_order: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>, nextbus_agency: &str) -> Result<i32, Error> {
+    println!("Generating nextbus stops...");
     let mut index = start_order;
 
     let parents = make_parents_map(gtfs_map);

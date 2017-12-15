@@ -35,7 +35,7 @@ impl std::error::Error for Error {
     fn cause(&self) -> Option<&std::error::Error> {
         match *self {
             Error::Rusqlite(ref err) => Some(err),
-            Error::GtfsMapError(ref err) => None,
+            Error::GtfsMapError(_) => None,
             Error::GetoptsFail(ref err) => Some(err),
             Error::Io(ref err) => Some(err),
             Error::Hyper(ref err) => Some(err),

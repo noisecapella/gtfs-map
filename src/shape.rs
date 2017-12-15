@@ -1,9 +1,5 @@
 extern crate csv;
 use std::fs::File;
-use std::iter::Skip;
-use std::io::Lines;
-use std::iter::Filter;
-use std::rc::Rc;
 use std::collections::BTreeMap;
 use std::path::Path;
 use error::Error;
@@ -32,7 +28,7 @@ impl Shape {
         for record in reader.deserialize() {
             let row: ShapeCsv = record.unwrap();
 
-            let mut list = map.entry(row.shape_id).or_insert(vec![]);
+            let list = map.entry(row.shape_id).or_insert(vec![]);
             list.push(Shape {
                 shape_pt_lat: row.shape_pt_lat,
                 shape_pt_lon: row.shape_pt_lon,

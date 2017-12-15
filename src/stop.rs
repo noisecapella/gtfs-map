@@ -1,12 +1,7 @@
 extern crate csv;
-use std::collections::HashSet;
-use std::iter::Skip;
 use std::fs::File;
-use std::io::Lines;
-use std::iter::Filter;
-use std::rc::Rc;
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 pub struct Stop {
     pub stop_code : String,

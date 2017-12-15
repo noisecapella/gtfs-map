@@ -1,10 +1,5 @@
 extern crate csv;
-use std::collections::HashSet;
 use std::fs::File;
-use std::iter::Skip;
-use std::io::Lines;
-use std::iter::Filter;
-use std::rc::Rc;
 use std::collections::BTreeMap;
 use std::path::Path;
 

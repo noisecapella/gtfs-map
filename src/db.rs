@@ -1,7 +1,5 @@
 use rusqlite::Connection;
 use error::Error;
-use route::Route;
-use stop::Stop;
 
 pub fn insert_route(conn: &Connection, route_id: &str, route_title: &str, route_color: i32, route_opposite_color: i32, index: i32, agency_id: i32, pathblob: &Vec<u8>) -> Result<i32, Error> {
     let mut statement = try!(conn.prepare("INSERT INTO routes (route, routetitle, color, oppositecolor, listorder, agencyid, pathblob) VALUES ($1, $2, $3, $4, $5, $6, $7)"));

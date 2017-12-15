@@ -1,18 +1,11 @@
 extern crate csv;
 
-use std::collections::HashSet;
-use std::iter::Skip;
-use std::io::Lines;
-use std::iter::Filter;
-use std::iter::Map;
-use std::rc::Rc;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use error::Error;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::BufReader;
 use std::collections::BTreeMap;
-use std::str;
 
 use common::read_header;
 
@@ -31,7 +24,6 @@ impl StopTimes {
 
         let field_indexes = read_header(&mut reader)?;
 
-        let mut counter: u64 = 0;
         {
             let trip_id_index = *field_indexes.get("trip_id").unwrap();
             let mut iter = reader.into_records();
@@ -40,7 +32,6 @@ impl StopTimes {
                 let next_pos = iter.reader().position().clone();
                 match iter.next() {
                     Some(record) => {
-                        let mut field_count = 0;
                         let trip_id = (record?)[trip_id_index].to_string();
                         let list = trip_lookup.entry(trip_id).or_insert(vec![]);
                         list.push(pos);

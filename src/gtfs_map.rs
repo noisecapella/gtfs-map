@@ -1,13 +1,7 @@
-use std::collections::HashSet;
-use std::iter::Skip;
-use std::io::Lines;
-use std::iter::Filter;
-use std::rc::Rc;
-use std::thread;
-use std::collections::{BTreeMap, HashMap};
-use std::path::{Path, PathBuf};
+use std::collections::BTreeMap;
+use std::path::Path;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Seek, SeekFrom};
+use std::io::BufReader;
 use std::str;
 
 use csv;
@@ -20,11 +14,11 @@ use stop::Stop;
 use stop_times::StopTimes;
 
 pub struct GtfsMap {
-    routes : BTreeMap<String, Route>,
-    shapes : BTreeMap<String, Vec<Shape>>,
-    trips : BTreeMap<String, Trip>,
-    stops : BTreeMap<String, Stop>,
-    stop_times : StopTimes,
+    pub routes : BTreeMap<String, Route>,
+    pub shapes : BTreeMap<String, Vec<Shape>>,
+    pub trips : BTreeMap<String, Trip>,
+    pub stops : BTreeMap<String, Stop>,
+    pub stop_times : StopTimes,
 }
 
 impl GtfsMap {
@@ -54,7 +48,7 @@ impl GtfsMap {
     pub fn find_routes_by_name(&self, name : &str) -> BTreeMap<&str, &Route>
     {
         self.routes.iter()
-            .filter(|&(route_id, route)| route.route_short_name == name || route.route_long_name == name)
+            .filter(|&(_, route)| route.route_short_name == name || route.route_long_name == name)
             .map(|(route_id, route)| (route_id.as_ref(), route))
             .collect()
     }
@@ -72,20 +66,26 @@ impl GtfsMap {
                 continue;
             }
             let shape_id_slice = trip.shape_id.as_ref();
-            let shapes_ref = try!(self.shapes.get(shape_id_slice).ok_or(Error::GtfsMapError("No shape found".to_string())));
-            let mut shapes: Vec<Shape> = Vec::new();
-            for shape in shapes_ref.iter() {
-                shapes.push(Shape {
-                    shape_pt_lat: shape.shape_pt_lat,
-                    shape_pt_lon: shape.shape_pt_lon,
-                    shape_pt_sequence: shape.shape_pt_sequence,
-                });
-            }
-            shapes.sort_by(|a, b| a.shape_pt_sequence.cmp(&b.shape_pt_sequence));
-            shape_map.insert(
-                shape_id_slice,
-                shapes
-            );
+            match self.shapes.get(shape_id_slice) {
+                Some(shapes_ref) => {
+                    let mut shapes: Vec<Shape> = Vec::new();
+                    for shape in shapes_ref.iter() {
+                        shapes.push(Shape {
+                            shape_pt_lat: shape.shape_pt_lat,
+                            shape_pt_lon: shape.shape_pt_lon,
+                            shape_pt_sequence: shape.shape_pt_sequence,
+                        });
+                    }
+                    shapes.sort_by(|a, b| a.shape_pt_sequence.cmp(&b.shape_pt_sequence));
+                    shape_map.insert(
+                        shape_id_slice,
+                        shapes
+                    );
+                }
+                None => {
+                    println!("Missing shape {}", shape_id_slice);
+                }
+            };
         }
 
         Ok(shape_map)
@@ -93,7 +93,7 @@ impl GtfsMap {
 
     pub fn find_routes_by_route_type(&self, route_type : i32) -> BTreeMap<&str, &Route> {
         self.routes.iter()
-            .filter(|&(route_id, route)| route.route_type == route_type)
+            .filter(|&(_, route)| route.route_type == route_type)
             .map(|(route_id, route)| (route_id.as_ref(), route))
             .collect()
     }
@@ -105,10 +105,9 @@ impl GtfsMap {
     pub fn find_stops_by_routes(&self, route_ids : &[&str]) -> Result<BTreeMap<String, &Stop>, Error> {
         let mut ret: BTreeMap<String, &Stop> = BTreeMap::new();
         let path = self.stop_times.stop_times_path.as_path();
-        let mut f = try!(File::open(path));
+        let f = try!(File::open(path));
         let mut reader = csv::Reader::from_reader(BufReader::new(f));
 
-        let mut counter = 0;
         for (trip_id, trip) in self.trips.iter() {
             if !route_ids.contains(&trip.route_id.as_ref()) {
                 continue;
@@ -120,11 +119,17 @@ impl GtfsMap {
                 try!(reader.seek(pos.clone()));
 
                 let mut row = csv::StringRecord::new();
-                reader.read_record(&mut row);
+                reader.read_record(&mut row)?;
                 let stop_id = row[stop_id_index].to_string();
                         
-                let stop = self.stops.get(&stop_id).unwrap();
-                ret.insert(stop_id, stop);
+                match self.stops.get(&stop_id) {
+                    Some(stop) => {
+                        ret.insert(stop_id, stop);
+                    }
+                    None => {
+                        println!("Missing stop {}", stop_id);
+                    }
+                }
             }
         }
         Ok(ret)
@@ -132,7 +137,7 @@ impl GtfsMap {
 
     pub fn find_trips_by_routes(&self, route_ids : &[&str]) -> BTreeMap<&str, &Trip> {
         self.trips.iter()
-            .filter(|&(trip_id, trip)| route_ids.contains(&trip.route_id.as_ref()))
+            .filter(|&(_, trip)| route_ids.contains(&trip.route_id.as_ref()))
             .map(|(trip_id, trip)| (trip_id.as_ref(), trip))
             .collect()
     }

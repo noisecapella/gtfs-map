@@ -1,3 +1,5 @@
+#![deny(warnings)]
+
 extern crate csv;
 extern crate getopts;
 extern crate rusqlite;
@@ -11,9 +13,6 @@ use gtfs_map::GtfsMap;
 use std::path::Path;
 use getopts::Options;
 use rusqlite::Connection;
-use std::fs;
-use std::process::Command;
-use rusqlite::types::ToSql;
 use std::collections::HashSet;
 
 pub mod path;
@@ -65,14 +64,21 @@ fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> 
     try!(create_tables(&connection));
     let mut index = 0;
     let mut stops_inserted: HashSet<String> = HashSet::new();
-    println!("Generating commuter rail stops...");
-    index = try!(mbta::generate_commuter_rail(&connection, index, &gtfs_map, &mut stops_inserted));
-    println!("Generating heavy rail stops...");
-    index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
-    println!("Generating nextbus stops...");
-    index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency));
-    println!("Generating Hubway stops...");
-    index = try!(hubway::generate_hubway(&connection, index));
+
+    match nextbus_agency {
+        "mbta" => {
+            index = try!(mbta::generate_commuter_rail(&connection, index, &gtfs_map, &mut stops_inserted));
+            index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
+            index = try!(hubway::generate_hubway(&connection, index));
+        }
+        "lametro" => {
+            index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency));
+        }
+        "ttc" => {
+            index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency));
+        }
+        _ => panic!(format!("Unknown agency {}", nextbus_agency))
+    }
     println!("routes inserted: {}", index);
 
     try!(connection.execute("COMMIT", &[]));
