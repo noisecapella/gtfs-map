@@ -67,7 +67,6 @@ fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> 
 
     match nextbus_agency {
         "mbta" => {
-            index = try!(mbta::generate_commuter_rail(&connection, index, &gtfs_map, &mut stops_inserted));
             index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
             index = try!(hubway::generate_hubway(&connection, index));
         }

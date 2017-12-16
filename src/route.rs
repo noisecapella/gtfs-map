@@ -13,7 +13,8 @@ pub struct Route {
     pub route_type : i32,
     pub route_url : String,
     pub route_color : i32,
-    pub route_text_color : i32
+    pub route_text_color : i32,
+    pub route_sort_order: Option<i32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -26,6 +27,7 @@ struct RouteCsv {
     route_type: i32,
     route_url: String,
     route_color: String,
+    route_sort_order: Option<i32>,
 }
 
 
@@ -54,6 +56,7 @@ impl Route {
                 route_url : row.route_url,
                 route_color : route_color,
                 route_text_color : route_color,
+                route_sort_order: row.route_sort_order,
             };
             map.insert(route_id.to_string(), route);
         }
