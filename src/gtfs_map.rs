@@ -48,7 +48,7 @@ impl GtfsMap {
     pub fn find_routes_by_name(&self, name : &str) -> BTreeMap<&str, &Route>
     {
         self.routes.iter()
-            .filter(|&(_, route)| route.route_short_name == name || route.route_long_name == name)
+            .filter(|&(_, route)| route.get_route_title() == name)
             .map(|(route_id, route)| (route_id.as_ref(), route))
             .collect()
     }

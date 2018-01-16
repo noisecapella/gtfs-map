@@ -64,5 +64,13 @@ impl Route {
         map
     }
 
-
+    pub fn get_route_title<'a>(&'a self) -> &'a str {
+        if self.route_short_name.len() != 0 {
+            self.route_short_name.as_ref()
+        } else if self.route_long_name.len() != 0 {
+            self.route_long_name.as_ref()
+        } else {
+            panic!("Route without a title")
+        }
+    }
 }

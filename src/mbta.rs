@@ -3,7 +3,7 @@ use rusqlite::Connection;
 use error::Error;
 use path::{Point, get_blob_from_path};
 use simplify_path::simplify_path;
-use constants::SUBWAY_AGENCY_ID;
+use constants::{SUBWAY_AGENCY_ID, COMMUTER_RAIL_AGENCY_ID, BUS_AGENCY_ID};
 use std::collections::HashSet;
 use db;
 
@@ -50,18 +50,48 @@ pub fn generate_heavy_rail(connection: &Connection, startorder: i32, gtfs_map: &
     let mut green_handled = false;
     for (route_id, route) in gtfs_map.routes.iter() {
         let routes;
+        let as_route;
+        let route_title;
         if route_id.starts_with("Green") {
             if green_handled {
                 continue;
             }
+            as_route = "Green";
             routes = vec!["Green-B", "Green-C", "Green-D", "Green-E"];
             green_handled = true;
+            route_title = "Green Line";
         } else {
+            as_route = route_id;
             routes = vec![route_id];
+            if as_route.starts_with("Logan") {
+                route_title = as_route;
+            } else {
+                route_title = route.get_route_title();
+            }
         }
-        add_line(connection, route.route_sort_order.unwrap_or(index), &routes, route_id, route_id, SUBWAY_AGENCY_ID, gtfs_map, stops_inserted, None)?;
+        add_line(connection, route.route_sort_order.unwrap_or(index), &routes, as_route, route_title, get_source_id(as_route), gtfs_map, stops_inserted, None)?;
         index += 1;
     }
     
     Ok(index)
 }
+
+fn get_source_id(route: &str) -> i32 {
+    if route.starts_with("CR-") {
+        return COMMUTER_RAIL_AGENCY_ID
+    }
+    
+    match route {
+        "Red" => SUBWAY_AGENCY_ID,
+        "Blue" => SUBWAY_AGENCY_ID,
+        "Orange" => SUBWAY_AGENCY_ID,
+        "Green" => SUBWAY_AGENCY_ID,
+        "741" => SUBWAY_AGENCY_ID, // SL1
+        "742" => SUBWAY_AGENCY_ID, // SL2
+        "751" => SUBWAY_AGENCY_ID, // SL4
+        "749" => SUBWAY_AGENCY_ID, // SL5
+        "746" => SUBWAY_AGENCY_ID, // Silver Line Waterfront
+        _ => BUS_AGENCY_ID
+    }
+}
+ 
