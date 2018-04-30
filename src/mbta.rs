@@ -48,6 +48,7 @@ pub fn generate_heavy_rail(connection: &Connection, startorder: i32, gtfs_map: &
     let mut index = startorder;
 
     let mut green_handled = false;
+    let mut red_line_shuttle_count = 0;
     for (route_id, route) in gtfs_map.routes.iter() {
         let routes;
         let as_route;
@@ -59,17 +60,20 @@ pub fn generate_heavy_rail(connection: &Connection, startorder: i32, gtfs_map: &
             as_route = "Green";
             routes = vec!["Green-B", "Green-C", "Green-D", "Green-E"];
             green_handled = true;
-            route_title = "Green Line";
+            route_title = "Green Line".to_string();
         } else {
             as_route = route_id;
             routes = vec![route_id];
             if as_route.starts_with("Logan") {
-                route_title = as_route;
+                route_title = as_route.to_string();
+            } else if route.get_route_title().to_string().starts_with("Red Line Shuttle") {
+                route_title = format!("Red Line Shuttle ({})", red_line_shuttle_count + 1).to_string();
+                red_line_shuttle_count += 1;
             } else {
-                route_title = route.get_route_title();
+                route_title = route.get_route_title().to_string();
             }
         }
-        add_line(connection, route.route_sort_order.unwrap_or(index), &routes, as_route, route_title, get_source_id(as_route), gtfs_map, stops_inserted, None)?;
+        add_line(connection, route.route_sort_order.unwrap_or(index), &routes, as_route, &route_title, get_source_id(as_route), gtfs_map, stops_inserted, None)?;
         index += 1;
     }
     
