@@ -117,7 +117,7 @@ fn main()  {
             generate(gtfs_map, connection).unwrap()
         }
         Err(err) => {
-            panic!(err);
+            panic!("{}", err);
         }
     }
 }

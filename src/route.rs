@@ -6,6 +6,8 @@ use std::iter::Filter;
 use std::rc::Rc;
 use std::collections::BTreeMap;
 
+use std::str::FromStr;
+
 use std::path::Path;
 pub struct Route {
     pub agency_id : String,
@@ -26,15 +28,15 @@ impl Route {
         let mut map : BTreeMap<String, Route> = BTreeMap::new();
 
         for record in reader.decode() {
-            let (route_id, agency_id, route_short_name, route_long_name, route_desc, route_type, route_url, route_color, route_text_color) : 
-                (String, String, String, String, String, i32, String, String, String) = record.unwrap();
+            let (route_id, route_short_name, route_long_name, route_desc, route_type, route_url, route_color, route_text_color) : 
+                (String, String, String, String, String, String, String, String) = record.unwrap();
 
             let route = Route {
-                agency_id : agency_id,
+                agency_id : "1".to_string(),
                 route_short_name : route_short_name,
                 route_long_name : route_long_name,
                 route_desc : route_desc,
-                route_type : route_type,
+                route_type : i32::from_str(&route_type).unwrap(),
                 route_url : route_url,
                 route_color : i32::from_str_radix(&route_color, 16).unwrap_or(0),
                 route_text_color : i32::from_str_radix(&route_color, 16).unwrap_or(0)

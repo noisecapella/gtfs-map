@@ -30,8 +30,8 @@ impl Stop {
             let unwrapped = record.unwrap();
             println!("printing...");
             println!("stop {:?}", unwrapped);
-            let (stop_id, stop_code, stop_name, stop_desc, stop_lat, stop_lon, zone_id, stop_url, location_type, parent_station, wheelchair_boarding) :
-                (String, String, String, String, String, String, String, String, String, String, u32) = unwrapped;
+            let (stop_id, stop_code, stop_name, stop_desc, stop_lat, stop_lon, stop_url, location_type, parent_station, tpis_name) :
+                (String, String, String, String, String, String, String, String, String, String) = unwrapped;
 
             let stop = Stop {
                 stop_code : stop_code,
@@ -39,7 +39,7 @@ impl Stop {
                 stop_desc : stop_desc,
                 stop_lat : stop_lat,
                 stop_lon : stop_lon,
-                zone_id : zone_id,
+                zone_id : "".to_string(),
                 stop_url : stop_url,
                 location_type : 1,
                 parent_station : parent_station

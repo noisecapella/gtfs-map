@@ -22,14 +22,14 @@ impl Shape {
         let mut map : BTreeMap<String, Vec<Shape>> = BTreeMap::new();
 
         for record in reader.decode() {
-            let (shape_id, shape_pt_lat, shape_pt_lon, shape_pt_sequence, shape_dist_traveled) :
-                (String, String, String, u32, String) = record.unwrap();
+            let (shape_id, shape_pt_lat, shape_pt_lon, shape_pt_sequence) :
+                (String, String, String, u32) = record.unwrap();
 
             let shape = Shape {
                 shape_pt_lat : try!(shape_pt_lat.parse()),
                 shape_pt_lon : try!(shape_pt_lon.parse()),
                 shape_pt_sequence : shape_pt_sequence,
-                shape_dist_traveled : shape_dist_traveled
+                shape_dist_traveled : "0".to_string()
             };
 
             let mut list = map.entry(shape_id).or_insert(vec![]);
