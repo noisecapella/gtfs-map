@@ -8,7 +8,7 @@ use gtfs_map::GtfsMap;
 use path::{Point, get_blob_from_path};
 use simplify_path::simplify_path;
 use std::collections::{HashSet, HashMap};
-use hyper::client::Client;
+use reqwest;
 use xml::reader::{EventReader, XmlEvent};
 use xml::name::OwnedName;
 use xml::attribute::OwnedAttribute;
@@ -41,8 +41,7 @@ fn get_attribute<'a>(attributes: &'a [OwnedAttribute], key: &str) -> Result<&'a 
 fn get_routes(nextbus_agency: &str) -> Result<Vec<(String, String)>, Error> {
     let route_list_url = make_url("routeList", None, nextbus_agency);
     
-    let client = Client::new();
-    let route_list_data = try!(client.get(&route_list_url).send());
+    let route_list_data = reqwest::get(&route_list_url)?;
 
     let parser = EventReader::new(route_list_data);
     let mut routes = vec![];
@@ -66,13 +65,12 @@ fn make_route_config_url(route_name: &str, nextbus_agency: &str) -> String {
 }
 
 fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<String>, parents: &HashMap<&str, &str>, start_order: i32, nextbus_agency: &str) -> Result<i32, Error> {
-    let client = Client::new();
-    let mut maybe_route_config_data = client.get(&make_route_config_url(route_name, nextbus_agency)).send();
+    let mut maybe_route_config_data = reqwest::get(&make_route_config_url(route_name, nextbus_agency));
     if let Err(_) = maybe_route_config_data {
         // try one more time
-        maybe_route_config_data = client.get(&make_route_config_url(route_name, nextbus_agency)).send();
+        maybe_route_config_data = reqwest::get(&make_route_config_url(route_name, nextbus_agency));
     }
-    let route_config_data = try!(maybe_route_config_data);
+    let route_config_data = maybe_route_config_data?;
 
     let parser = EventReader::new(route_config_data);
     let mut in_direction = false;

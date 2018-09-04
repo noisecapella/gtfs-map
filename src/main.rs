@@ -2,7 +2,7 @@ extern crate csv;
 extern crate getopts;
 extern crate rusqlite;
 extern crate byteorder;
-extern crate hyper;
+extern crate reqwest;
 extern crate xml;
 #[macro_use]
 extern crate serde_derive;

@@ -49,6 +49,9 @@ impl Route {
 
             let route_color = i32::from_str_radix(&row.route_color, 16).unwrap_or(0);
             let route_id = row.route_id.to_string();
+            //if route_id == "CapeFlyer" {
+            //    continue;
+            //}
 
             let route = Route {
                 agency_id : match row.agency_id {

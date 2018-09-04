@@ -10,20 +10,23 @@ use db;
 
 pub fn add_line(conn: &Connection, startorder: i32, route_ids: &[&str], as_route: &str, route_title: &str, agency_id: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>, color_override: Option<i32>) -> Result<i32, Error> {
     println!("Adding route {}...", as_route);
+    if as_route == "CapeFlyer" {
+        return Ok(0)
+    }
     let route = try!(gtfs_map.find_route_by_id(route_ids[0]));
 
     let shapes = try!(gtfs_map.find_shapes_by_routes(route_ids));
     let paths: Vec<Vec<Point>> = shapes.iter().map(
         |(shape_id, shapes)| {
             let path: Vec<Point> = shapes.iter().map(|shape| Point::from(shape)).collect();
-            println!("simplifying {} {}", shape_id, path.len());
+            //println!("simplifying {} {}", shape_id, path.len());
             for point in &path {
-                println!("{} {}", point.lat, point.lon);
+                //println!("{} {}", point.lat, point.lon);
             }
             let ret = simplify_path(&path);
-            println!("simplified {} {}", ret.len(), as_route);
+            //println!("simplified {} {}", ret.len(), as_route);
             for point in &ret {
-                println!("{} {}", point.lat, point.lon);
+                //println!("{} {}", point.lat, point.lon);
             }
             ret
         }

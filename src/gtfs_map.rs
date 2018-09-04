@@ -115,14 +115,18 @@ impl GtfsMap {
             }
 
             let stop_id_index = *self.stop_times.field_indexes.get("stop_id").unwrap();
+            println!("stop_id_index {}", stop_id_index);
             let stop_times_indexes = try!(self.stop_times.trip_lookup.get(trip_id).ok_or(Error::GtfsMapError("No trip found in stop_times".to_string())));
+            //let mut firstRow = csv::StringRecord::new();
+            //reader.read_record(&mut firstRow);
             for pos in stop_times_indexes.iter() {
                 try!(reader.seek(pos.clone()));
 
                 let mut row = csv::StringRecord::new();
                 reader.read_record(&mut row);
                 let stop_id = row[stop_id_index].to_string();
-                        
+
+                println!("row {}\n", stop_id);
                 let stop = self.stops.get(&stop_id).unwrap();
                 ret.insert(stop_id, stop);
             }
