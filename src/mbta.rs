@@ -4,7 +4,7 @@ use error::Error;
 use path::{Point, get_blob_from_path};
 use route::Route;
 use simplify_path::simplify_path;
-use constants::{COMMUTER_RAIL_AGENCY_ID, SUBWAY_AGENCY_ID};
+use constants::{BUS_AGENCY_ID, COMMUTER_RAIL_AGENCY_ID, SUBWAY_AGENCY_ID};
 use std::collections::{BTreeMap, HashSet};
 use db;
 
@@ -15,19 +15,14 @@ pub fn add_line(conn: &Connection, startorder: i32, route_ids: &[&str], as_route
     }
     let route = try!(gtfs_map.find_route_by_id(route_ids[0]));
 
-    let shapes = try!(gtfs_map.find_shapes_by_routes(route_ids));
+    let shapes = match gtfs_map.find_shapes_by_routes(route_ids) {
+        Ok(x) => x,
+        Error => BTreeMap::new()
+    };
     let paths: Vec<Vec<Point>> = shapes.iter().map(
         |(shape_id, shapes)| {
             let path: Vec<Point> = shapes.iter().map(|shape| Point::from(shape)).collect();
-            //println!("simplifying {} {}", shape_id, path.len());
-            for point in &path {
-                //println!("{} {}", point.lat, point.lon);
-            }
             let ret = simplify_path(&path);
-            //println!("simplified {} {}", ret.len(), as_route);
-            for point in &ret {
-                //println!("{} {}", point.lat, point.lon);
-            }
             ret
         }
     ).collect();
@@ -55,6 +50,64 @@ pub fn add_line(conn: &Connection, startorder: i32, route_ids: &[&str], as_route
     Ok(routes_added)
 }
 
+static commuter_rail_routes: &'static [&'static str] = &[
+    "CR-Greenbush",
+    "CR-Kingston",
+    "CR-Middleborough",
+    "CR-Fairmount",
+    "CR-Providence",
+    "CR-Franklin",
+    "CR-Needham",
+    "CR-Worcester",
+    "CR-Fitchburg",
+    "CR-Lowell",
+    "CR-Haverhill",
+    "CR-Newburyport",
+    "CapeFlyer",
+];
+
+static subway_routes: &'static [&'static str] = &[
+    "Red",
+    "Orange",
+    "Blue",
+    "Green-B",
+    "Green-C",
+    "Green-D",
+    "Green-E",
+    "Mattapan",
+    "712",
+    "713"
+];
+
+pub fn generate_bus(connection: &Connection, startorder: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>) -> Result<i32, Error> {
+    let mut index = startorder;
+
+    //subway_routes.contains(&"x");
+    for (route_id, route) in gtfs_map.find_routes() {
+        if commuter_rail_routes.contains(&route_id) {
+            continue;
+        }
+
+        if subway_routes.contains(&route_id) {
+            continue;
+        }
+
+        if ["Airport Shuttle", "Limited Service", "Rail Replacement Bus"].contains(&route.route_desc.as_ref()) {
+            continue;
+        }
+
+        let name = if route.route_short_name.len() == 0 {
+            &route.route_long_name
+        } else {
+            &route.route_short_name
+        };
+        
+        index += try!(add_line(connection, index, &[route_id], route_id, name, BUS_AGENCY_ID, gtfs_map, stops_inserted, None));
+    }
+    
+    Ok(index)
+}
+
 pub fn generate_heavy_rail(connection: &Connection, startorder: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>) -> Result<i32, Error> {
     let mut index = startorder;
 
@@ -74,25 +127,10 @@ pub fn generate_heavy_rail(connection: &Connection, startorder: i32, gtfs_map: &
 }
 
 pub fn generate_commuter_rail(connection: &Connection, startorder: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>) -> Result<i32, Error> {
-    let routes_in_order = [
-        "CR-Greenbush",
-        "CR-Kingston",
-        "CR-Middleborough",
-        "CR-Fairmount",
-        "CR-Providence",
-        "CR-Franklin",
-        "CR-Needham",
-        "CR-Worcester",
-        "CR-Fitchburg",
-        "CR-Lowell",
-        "CR-Haverhill",
-        "CR-Newburyport",
-        "CapeFlyer",
-    ];
     let mut index = startorder;
     const purple: i32 = 0x940088;
 
-    for route_id in routes_in_order.iter() {
+    for route_id in commuter_rail_routes.iter() {
         let route = try!(gtfs_map.find_route_by_id(route_id));
         let route_title = if route.route_short_name.len() != 0 {
             &route.route_short_name

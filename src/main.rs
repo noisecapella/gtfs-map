@@ -65,14 +65,20 @@ fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> 
     try!(create_tables(&connection));
     let mut index = 0;
     let mut stops_inserted: HashSet<String> = HashSet::new();
-    println!("Generating commuter rail stops...");
-    index = try!(mbta::generate_commuter_rail(&connection, index, &gtfs_map, &mut stops_inserted));
-    println!("Generating heavy rail stops...");
-    index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
+    if nextbus_agency == "mbta" {
+        println!("Generating commuter rail stops...");
+        index = try!(mbta::generate_commuter_rail(&connection, index, &gtfs_map, &mut stops_inserted));
+        println!("Generating heavy rail stops...");
+        index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
+        println!("Generating bus stops...");
+        index = try!(mbta::generate_bus(&connection, index, &gtfs_map, &mut stops_inserted));
+    }
     println!("Generating nextbus stops...");
-    index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency));
-    println!("Generating Hubway stops...");
-    index = try!(hubway::generate_hubway(&connection, index));
+    //index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency));
+    if nextbus_agency == "mbta" {
+        println!("Generating Hubway stops...");
+        index = try!(hubway::generate_hubway(&connection, index));
+    }
     println!("routes inserted: {}", index);
 
     try!(connection.execute("COMMIT", &[]));
