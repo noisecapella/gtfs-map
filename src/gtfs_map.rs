@@ -53,7 +53,10 @@ impl GtfsMap {
 
     pub fn find_routes(&self) -> BTreeMap<&str, &Route> {
         self.routes.iter()
-            .map(|(route_id, route)| (route_id.as_ref(), route))
+            .map(|(route_id, route)| {
+                println!("mapping route {}", route_id);
+                (route_id.as_ref(), route)
+            })
             .collect()
     }
     
@@ -133,6 +136,9 @@ impl GtfsMap {
                 let stop_id = row[stop_id_index].to_string();
 
                 //println!("row {}\n", stop_id);
+                if stop_id == "70838" {
+                    println!("special route {} {}", trip_id, trip.route_id);
+                }
                 let stop = self.stops.get(&stop_id).unwrap();
                 ret.insert(stop_id, stop);
             }

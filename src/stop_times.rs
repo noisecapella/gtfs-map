@@ -35,18 +35,13 @@ impl StopTimes {
         {
             let trip_id_index = *field_indexes.get("trip_id").unwrap();
             let mut iter = reader.into_records();
-            let mut pos = csv::Position::new();
             loop {
-                let next_pos = iter.reader().position().clone();
+                let pos = iter.reader().position().clone();
                 match iter.next() {
                     Some(record) => {
-                        let mut field_count = 0;
                         let trip_id = (record?)[trip_id_index].to_string();
                         let list = trip_lookup.entry(trip_id).or_insert(vec![]);
                         list.push(pos);
-
-                        pos = next_pos;
-                        
                     }
                     None => {
                         break;

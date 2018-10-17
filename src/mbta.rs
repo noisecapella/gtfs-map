@@ -10,9 +10,6 @@ use db;
 
 pub fn add_line(conn: &Connection, startorder: i32, route_ids: &[&str], as_route: &str, route_title: &str, agency_id: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>, color_override: Option<i32>) -> Result<i32, Error> {
     println!("Adding route {}...", as_route);
-    if as_route == "CapeFlyer" {
-        return Ok(0)
-    }
     let route = try!(gtfs_map.find_route_by_id(route_ids[0]));
 
     let shapes = match gtfs_map.find_shapes_by_routes(route_ids) {
@@ -63,7 +60,6 @@ static commuter_rail_routes: &'static [&'static str] = &[
     "CR-Lowell",
     "CR-Haverhill",
     "CR-Newburyport",
-    "CapeFlyer",
 ];
 
 static subway_routes: &'static [&'static str] = &[
@@ -83,26 +79,38 @@ pub fn generate_bus(connection: &Connection, startorder: i32, gtfs_map: &GtfsMap
     let mut index = startorder;
 
     //subway_routes.contains(&"x");
+    let mut titleSet = HashSet::new();
     for (route_id, route) in gtfs_map.find_routes() {
         if commuter_rail_routes.contains(&route_id) {
+            println!("skipping commuter rail {}", route_id);
             continue;
         }
 
         if subway_routes.contains(&route_id) {
+            println!("skipping subway {}", route_id);
             continue;
         }
 
-        if ["Airport Shuttle", "Limited Service", "Rail Replacement Bus"].contains(&route.route_desc.as_ref()) {
+        if route.route_desc == "Ferry" {
             continue;
         }
 
-        let name = if route.route_short_name.len() == 0 {
-            &route.route_long_name
+        let mut name = if route.route_short_name.len() == 0 {
+            route.route_long_name.to_string()
         } else {
-            &route.route_short_name
+            route.route_short_name.to_string()
         };
-        
-        index += try!(add_line(connection, index, &[route_id], route_id, name, BUS_AGENCY_ID, gtfs_map, stops_inserted, None));
+
+        let mut counter = 0;
+        let oldName = name.to_string();
+        while titleSet.contains(&name) {
+            counter += 1;
+            name = format!("{} ({})", oldName.to_string(), counter);
+        }
+        titleSet.insert(name.to_string());
+
+        println!("adding {}", route_id);
+        index += try!(add_line(connection, index, &[route_id], route_id, &name, BUS_AGENCY_ID, gtfs_map, stops_inserted, None));
     }
     
     Ok(index)
