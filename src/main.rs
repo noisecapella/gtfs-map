@@ -74,7 +74,7 @@ fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> 
         index = try!(mbta::generate_bus(&connection, index, &gtfs_map, &mut stops_inserted));
     }
     println!("Generating nextbus stops...");
-    //index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency));
+    index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency));
     if nextbus_agency == "mbta" {
         println!("Generating Hubway stops...");
         index = try!(hubway::generate_hubway(&connection, index));
