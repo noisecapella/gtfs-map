@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS stops (tag TEXT PRIMARY KEY, lat FLOAT, lon FLOAT, ti
     for line in create_sql.split("\n") {
         let trim_line = line.trim();
         if !trim_line.is_empty() {
-            try!(connection.execute(trim_line, &[]));
+            let v: [String; 0] = [];
+            try!(connection.execute(trim_line, &v));
         }
     }
     Ok(())
@@ -81,7 +82,8 @@ fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> 
     }
     println!("routes inserted: {}", index);
 
-    try!(connection.execute("COMMIT", &[]));
+    let empty: [String; 0] = [];
+    try!(connection.execute("COMMIT", &empty));
     Ok(())
 }
 
@@ -115,7 +117,8 @@ fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error>
 
     let gtfs_map = try!(GtfsMap::new(gtfs_path_str));
     let connection = try!(Connection::open(&output_path));
-    try!(connection.execute("BEGIN TRANSACTION", &[]));
+    let empty: [String; 0] = [];
+    try!(connection.execute("BEGIN TRANSACTION", &empty));
     Ok((gtfs_map, connection, nextbus_agency))
 }
 
