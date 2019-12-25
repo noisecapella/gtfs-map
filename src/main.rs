@@ -4,7 +4,7 @@ extern crate csv;
 extern crate getopts;
 extern crate rusqlite;
 extern crate byteorder;
-extern crate hyper;
+extern crate reqwest;
 extern crate xml;
 #[macro_use]
 extern crate serde_derive;
@@ -54,7 +54,8 @@ CREATE TABLE IF NOT EXISTS stops (tag TEXT PRIMARY KEY, lat FLOAT, lon FLOAT, ti
     for line in create_sql.split("\n") {
         let trim_line = line.trim();
         if !trim_line.is_empty() {
-            try!(connection.execute(trim_line, &[]));
+            let v: [String; 0] = [];
+            try!(connection.execute(trim_line, &v));
         }
     }
     Ok(())
@@ -64,23 +65,26 @@ fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> 
     try!(create_tables(&connection));
     let mut index = 0;
     let mut stops_inserted: HashSet<String> = HashSet::new();
-
-    match nextbus_agency {
-        "mbta" => {
-            index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
-            index = try!(hubway::generate_hubway(&connection, index));
-        }
-        "lametro" => {
-            index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency));
-        }
-        "ttc" => {
-            index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency));
-        }
-        _ => panic!(format!("Unknown agency {}", nextbus_agency))
+    if nextbus_agency == "mbta" {
+        println!("Generating commuter rail stops...");
+        index = try!(mbta::generate_commuter_rail(&connection, index, &gtfs_map, &mut stops_inserted));
+        println!("Generating heavy rail stops...");
+        index = try!(mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted));
+        println!("Generating bus stops...");
+        index = try!(mbta::generate_bus(&connection, index, &gtfs_map, &mut stops_inserted));
+    }
+    println!("Generating nextbus stops...");
+    if nextbus_agency != "mbta" {
+        index = try!(nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency));
+    }
+    if nextbus_agency == "mbta" {
+        println!("Generating Hubway stops...");
+        index = try!(hubway::generate_hubway(&connection, index));
     }
     println!("routes inserted: {}", index);
 
-    try!(connection.execute("COMMIT", &[]));
+    let empty: [String; 0] = [];
+    try!(connection.execute("COMMIT", &empty));
     Ok(())
 }
 
@@ -114,7 +118,8 @@ fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error>
 
     let gtfs_map = try!(GtfsMap::new(gtfs_path_str));
     let connection = try!(Connection::open(&output_path));
-    try!(connection.execute("BEGIN TRANSACTION", &[]));
+    let empty: [String; 0] = [];
+    try!(connection.execute("BEGIN TRANSACTION", &empty));
     Ok((gtfs_map, connection, nextbus_agency))
 }
 
