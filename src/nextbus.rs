@@ -54,7 +54,9 @@ fn get_routes(nextbus_agency: &str) -> Result<Vec<(String, String)>, Error> {
                     routes.push((route_name.to_string(), route_title.to_string()));
                 }
             ),
-            _ => {}
+            Ok(_) => {},
+            Err(other) => { panic!(format!("Unknown error {}", other)); }
+            
         }
     };
     Ok(routes)
