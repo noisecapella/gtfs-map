@@ -13,7 +13,7 @@ pub fn add_line(conn: &Connection, route_sort_order: i32, route_ids: &[&str], as
 
     let shapes = match gtfs_map.find_shapes_by_routes(route_ids) {
         Ok(x) => x,
-        Error => BTreeMap::new()
+        Err(_) => BTreeMap::new()
     };
     let paths: Vec<Vec<Point>> = shapes.iter().map(
         |(_, shapes)| {
@@ -47,7 +47,7 @@ pub fn add_line(conn: &Connection, route_sort_order: i32, route_ids: &[&str], as
     Ok(routes_added)
 }
 
-static commuter_rail_routes: &'static [&'static str] = &[
+static COMMUTER_RAIL_ROUTES: &'static [&'static str] = &[
     "CR-Greenbush",
     "CR-Kingston",
     "CR-Middleborough",
@@ -62,7 +62,7 @@ static commuter_rail_routes: &'static [&'static str] = &[
     "CR-Newburyport",
 ];
 
-static subway_routes: &'static [&'static str] = &[
+static SUBWAY_ROUTES: &'static [&'static str] = &[
     "Red",
     "Orange",
     "Blue",
@@ -79,14 +79,14 @@ pub fn generate_bus(connection: &Connection, startorder: i32, gtfs_map: &GtfsMap
     let mut index = startorder;
 
     //subway_routes.contains(&"x");
-    let mut titleSet = HashSet::new();
+    let mut title_set = HashSet::new();
     for (route_id, route) in gtfs_map.find_routes() {
-        if commuter_rail_routes.contains(&route_id) {
+        if COMMUTER_RAIL_ROUTES.contains(&route_id) {
             println!("skipping commuter rail {}", route_id);
             continue;
         }
 
-        if subway_routes.contains(&route_id) {
+        if SUBWAY_ROUTES.contains(&route_id) {
             println!("skipping subway {}", route_id);
             continue;
         }
@@ -102,12 +102,12 @@ pub fn generate_bus(connection: &Connection, startorder: i32, gtfs_map: &GtfsMap
         };
 
         let mut counter = 0;
-        let oldName = name.to_string();
-        while titleSet.contains(&name) {
+        let old_name = name.to_string();
+        while title_set.contains(&name) {
             counter += 1;
-            name = format!("{} ({})", oldName.to_string(), counter);
+            name = format!("{} ({})", old_name.to_string(), counter);
         }
-        titleSet.insert(name.to_string());
+        title_set.insert(name.to_string());
 
         println!("adding {}", route_id);
         index += try!(add_line(connection, index, &[route_id], route_id, &name, BUS_AGENCY_ID, gtfs_map, stops_inserted, None));
@@ -146,7 +146,7 @@ pub fn generate_heavy_rail(connection: &Connection, startorder: i32, gtfs_map: &
                 route_title = route.get_route_title().to_string();
             }
         }
-        add_line(connection, route.route_sort_order.unwrap_or(index), &routes, as_route, &route_title, get_source_id(as_route), gtfs_map, stops_inserted, None)?;
+        add_line(connection, route.route_sort_order.unwrap_or(index), &routes, as_route, &route_title, SUBWAY_AGENCY_ID, gtfs_map, stops_inserted, None)?;
         index += 1;
     }
     
@@ -155,9 +155,9 @@ pub fn generate_heavy_rail(connection: &Connection, startorder: i32, gtfs_map: &
 
 pub fn generate_commuter_rail(connection: &Connection, startorder: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>) -> Result<i32, Error> {
     let mut index = startorder;
-    const purple: i32 = 0x940088;
+    const PURPLE: i32 = 0x940088;
 
-    for route_id in commuter_rail_routes.iter() {
+    for route_id in COMMUTER_RAIL_ROUTES.iter() {
         let route = try!(gtfs_map.find_route_by_id(route_id));
         let route_title = if route.route_short_name.len() != 0 {
             &route.route_short_name
@@ -165,7 +165,9 @@ pub fn generate_commuter_rail(connection: &Connection, startorder: i32, gtfs_map
             &route.route_long_name
         };
 
-        index += try!(add_line(connection, index, &[route_id], route_id, &route_title, COMMUTER_RAIL_AGENCY_ID, gtfs_map, stops_inserted, Some(purple)));
+        index += try!(add_line(connection, index, &[route_id], route_id, &route_title, COMMUTER_RAIL_AGENCY_ID, gtfs_map, stops_inserted, Some(PURPLE)));
     }
+
+    Ok(index)
 }
  

@@ -32,7 +32,7 @@ impl std::error::Error for Error {
         }
     }
 
-    fn cause(&self) -> Option<&std::error::Error> {
+    fn cause(&self) -> Option<&dyn std::error::Error> {
         match *self {
             Error::Rusqlite(ref err) => Some(err),
             Error::GtfsMapError(_) => None,
