@@ -117,14 +117,13 @@ pub fn generate_bus(connection: &Connection, startorder: i32, gtfs_map: &GtfsMap
 }
 
 pub fn generate_heavy_rail(connection: &Connection, startorder: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>) -> Result<i32, Error> {
-    println!("Generating heavy rail stops...");
     let mut index = startorder;
 
     let mut green_handled = false;
     let mut red_line_shuttle_count = 0;
-    for (route_id, route) in gtfs_map.routes.iter() {
+    for (route_id, route) in gtfs_map.find_routes() {
         let routes;
-        let as_route;
+        let as_route ;
         let route_title;
         if route_id.starts_with("Green") {
             if green_handled {
@@ -134,7 +133,7 @@ pub fn generate_heavy_rail(connection: &Connection, startorder: i32, gtfs_map: &
             routes = vec!["Green-B", "Green-C", "Green-D", "Green-E"];
             green_handled = true;
             route_title = "Green Line".to_string();
-        } else {
+        } else if SUBWAY_ROUTES.contains(&route_id) {
             as_route = route_id;
             routes = vec![route_id];
             if as_route.starts_with("Logan") {
@@ -145,7 +144,10 @@ pub fn generate_heavy_rail(connection: &Connection, startorder: i32, gtfs_map: &
             } else {
                 route_title = route.get_route_title().to_string();
             }
+        } else {
+            continue;
         }
+
         add_line(connection, route.route_sort_order.unwrap_or(index), &routes, as_route, &route_title, SUBWAY_AGENCY_ID, gtfs_map, stops_inserted, None)?;
         index += 1;
     }
