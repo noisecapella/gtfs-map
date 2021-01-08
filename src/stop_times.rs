@@ -17,7 +17,7 @@ pub struct StopTimes {
 
 impl StopTimes {
     pub fn make_stop_times(stop_times_path: &Path) -> Result<StopTimes, Error> {
-        let f = try!(File::open(stop_times_path));
+        let f = (File::open(stop_times_path))?;
         let mut reader = csv::Reader::from_reader(BufReader::new(f));
 
         let mut trip_lookup: BTreeMap<String, Vec<csv::Position>> = BTreeMap::new();

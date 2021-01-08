@@ -31,10 +31,10 @@ impl GtfsMap {
         let stop_times_path = gtfs_path.join("stop_times.txt");
 
         let routes = Route::make_routes(&routes_path);
-        let shapes = try!(Shape::make_shapes(&shapes_path));
+        let shapes = (Shape::make_shapes(&shapes_path))?;
         let trips = Trip::make_trips(&trips_path);
         let stops = Stop::make_stops(&stops_path);
-        let stop_times = try!(StopTimes::make_stop_times(&stop_times_path));
+        let stop_times = (StopTimes::make_stop_times(&stop_times_path))?;
 
         Ok(GtfsMap {
             routes : routes,
@@ -114,7 +114,7 @@ impl GtfsMap {
     pub fn find_stops_by_routes(&self, route_ids : &[&str]) -> Result<BTreeMap<String, &Stop>, Error> {
         let mut ret: BTreeMap<String, &Stop> = BTreeMap::new();
         let path = self.stop_times.stop_times_path.as_path();
-        let f = try!(File::open(path));
+        let f = (File::open(path))?;
         let mut reader = csv::Reader::from_reader(BufReader::new(f));
 
         for (trip_id, trip) in self.trips.iter() {
@@ -124,11 +124,11 @@ impl GtfsMap {
 
             let stop_id_index = *self.stop_times.field_indexes.get("stop_id").unwrap();
             //println!("stop_id_index {}", stop_id_index);
-            let stop_times_indexes = try!(self.stop_times.trip_lookup.get(trip_id).ok_or(Error::GtfsMapError("No trip found in stop_times".to_string())));
+            let stop_times_indexes = (self.stop_times.trip_lookup.get(trip_id).ok_or(Error::GtfsMapError("No trip found in stop_times".to_string())))?;
             //let mut firstRow = csv::StringRecord::new();
             //reader.read_record(&mut firstRow);
             for pos in stop_times_indexes.iter() {
-                try!(reader.seek(pos.clone()));
+                (reader.seek(pos.clone()))?;
 
                 let mut row = csv::StringRecord::new();
                 reader.read_record(&mut row)?;

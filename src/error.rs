@@ -18,20 +18,6 @@ pub enum Error {
 }
 
 impl std::error::Error for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::Rusqlite(ref err) => err.description(),
-            Error::GtfsMapError(ref err) => err.as_ref(),
-            Error::GetoptsFail(ref err) => err.description(),
-            Error::Io(ref err) => err.description(),
-            Error::Reqwest(ref err) => err.description(),
-            Error::ParseInt(ref err) => err.description(),
-            Error::ParseFloat(ref err) => err.description(),
-            Error::Csv(ref err) => err.description(),
-            Error::Utf8(ref err) => err.description(),
-        }
-    }
-
     fn cause(&self) -> Option<&dyn std::error::Error> {
         match *self {
             Error::Rusqlite(ref err) => Some(err),

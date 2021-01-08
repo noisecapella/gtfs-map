@@ -17,6 +17,6 @@ pub fn generate_hubway(conn: &Connection, index: i32) -> Result<i32, Error> {
 
     let fields: &[&dyn ToSql] = &[&route, &routetitle, &color, &oppositecolor, &listorder, &agencyid, &pathblob];
     
-    try!(statement.execute(fields));
+    (statement.execute(fields))?;
     Ok(index + 1)
 }

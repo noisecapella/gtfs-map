@@ -47,8 +47,8 @@ fn get_routes(nextbus_agency: &str) -> Result<Vec<(String, String)>, Error> {
         match event {
             Ok(XmlEvent::StartElement { name, attributes, .. }) => (
                 if name.local_name == "route" {
-                    let route_name = try!(get_attribute(&attributes, "tag"));
-                    let route_title = try!(get_attribute(&attributes, "title"));
+                    let route_name = (get_attribute(&attributes, "tag"))?;
+                    let route_title = (get_attribute(&attributes, "title"))?;
                     routes.push((route_name.to_string(), route_title.to_string()));
                 }
             ),
@@ -82,22 +82,22 @@ fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<S
             Ok(XmlEvent::StartElement { name, attributes, .. }) => {
                 match name.local_name.as_ref() {
                     "route" => {
-                        let route_id = try!(get_attribute(&attributes, "tag")).to_string();
-                        let route_title = try!(get_attribute(&attributes, "title")).to_string();
-                        let color_string = try!(get_attribute(&attributes, "color"));
-                        let color = try!(i32::from_str_radix(color_string, 16));
-                        let opposite_color_string = try!(get_attribute(&attributes, "oppositeColor"));
-                        let opposite_color = try!(i32::from_str_radix(opposite_color_string, 16));
+                        let route_id = (get_attribute(&attributes, "tag"))?.to_string();
+                        let route_title = (get_attribute(&attributes, "title"))?.to_string();
+                        let color_string = (get_attribute(&attributes, "color"))?;
+                        let color = (i32::from_str_radix(color_string, 16))?;
+                        let opposite_color_string = (get_attribute(&attributes, "oppositeColor"))?;
+                        let opposite_color = (i32::from_str_radix(opposite_color_string, 16))?;
                         current_route = Some((route_id, route_title, color, opposite_color));
                     },
                     "stop" => {
-                        let tag = try!(get_attribute(&attributes, "tag"));
+                        let tag = (get_attribute(&attributes, "tag"))?;
                         if !in_direction {
                             if !stops_inserted.contains(tag) {
                                 stops_inserted.insert(tag.to_string());
-                                let title = try!(get_attribute(&attributes, "title"));
-                                let lat = try!(get_attribute(&attributes, "lat"));
-                                let lon = try!(get_attribute(&attributes, "lon"));
+                                let title = (get_attribute(&attributes, "title"))?;
+                                let lat = (get_attribute(&attributes, "lat"))?;
+                                let lon = (get_attribute(&attributes, "lon"))?;
                                 
                                 let maybe_stop_id = tag.split("_").next();
                                 let mut parent_id = "";
@@ -110,28 +110,28 @@ fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<S
                                     }
                                 }
                                 
-                                try!(db::insert_stop(conn, tag, title, lat, lon, parent_id));
+                                (db::insert_stop(conn, tag, title, lat, lon, parent_id))?;
                             }
                             
-                            try!(db::insert_stopmapping(conn, tag, &current_route.as_ref().unwrap().0));
+                            (db::insert_stopmapping(conn, tag, &current_route.as_ref().unwrap().0))?;
                         }
                     },
                     "direction" => {
-                        let dir_tag = try!(get_attribute(&attributes, "tag"));
+                        let dir_tag = (get_attribute(&attributes, "tag"))?;
                         in_direction = true;
                         if let Some(&(ref route_id, _, _, _)) = current_route.as_ref() {
-                            let dir_title = try!(get_attribute(&attributes, "title"));
-                            let dir_name = try!(get_attribute(&attributes, "name"));
-                            let use_for_ui_string = try!(get_attribute(&attributes, "useForUI"));
+                            let dir_title = (get_attribute(&attributes, "title"))?;
+                            let dir_name = (get_attribute(&attributes, "name"))?;
+                            let use_for_ui_string = (get_attribute(&attributes, "useForUI"))?;
                             let use_for_ui = use_for_ui_string == "true";
-                            try!(db::insert_direction(conn, dir_tag, dir_title, route_id, dir_name, use_for_ui));
+                            (db::insert_direction(conn, dir_tag, dir_title, route_id, dir_name, use_for_ui))?;
                         }
                     },
                     "point" => {
-                        let lat_string = try!(get_attribute(&attributes, "lat"));
-                        let lon_string = try!(get_attribute(&attributes, "lon"));
-                        let lat: f64 = try!(lat_string.parse());
-                        let lon: f64 = try!(lon_string.parse());
+                        let lat_string = (get_attribute(&attributes, "lat"))?;
+                        let lon_string = (get_attribute(&attributes, "lon"))?;
+                        let lat: f64 = (lat_string.parse())?;
+                        let lon: f64 = (lon_string.parse())?;
                         current_path_points.push(Point { lat: lat, lon: lon });
                     },
                     _ => {}
@@ -145,7 +145,7 @@ fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<S
                     "route" => {
                         if let Some(&(ref route_id, ref route_title, color, opposite_color)) = current_route.as_ref() {
                             let pathblob = get_blob_from_path(&current_paths);
-                            try!(db::insert_route(conn, route_id, route_title, color, opposite_color, start_order, BUS_AGENCY_ID, &pathblob));
+                            (db::insert_route(conn, route_id, route_title, color, opposite_color, start_order, BUS_AGENCY_ID, &pathblob))?;
                             current_paths.clear();
                         }
                         current_route = None;
@@ -177,12 +177,12 @@ pub fn generate(conn: &Connection, start_order: i32, gtfs_map: &GtfsMap, stops_i
     let parents = make_parents_map(gtfs_map);
     
     println!("Downloading NextBus route data (this will take 10 or 20 minutes)...");
-    let routes = try!(get_routes(nextbus_agency));
+    let routes = (get_routes(nextbus_agency))?;
 
     for (route_name, route_title) in routes {
         println!("{}...", route_title);
 
-        index += try!(add_route(conn, &route_name, stops_inserted, &parents, index, nextbus_agency));
+        index += (add_route(conn, &route_name, stops_inserted, &parents, index, nextbus_agency))?;
 
         // NextBus rate limiting
         thread::sleep(time::Duration::from_secs(3));
