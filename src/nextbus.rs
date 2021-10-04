@@ -15,8 +15,7 @@ use constants::{BUS_AGENCY_ID};
 
 fn make_url(command: &str, route_name: Option<&str>, nextbus_agency: &str) -> String {
     format!(
-        "http://{prefix}.nextbus.com/service/publicXMLFeed?a={agency}&command={command}{other}",
-        prefix="webservices",
+        "https://retro.umoiq.com/service/publicXMLFeed?a={agency}&command={command}{other}",
         agency=nextbus_agency,
         command=command,
         other=(match route_name {
