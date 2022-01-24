@@ -52,7 +52,7 @@ fn get_routes(nextbus_agency: &str) -> Result<Vec<(String, String)>, Error> {
                 }
             ),
             Ok(_) => {},
-            Err(other) => { panic!(format!("Unknown error {}", other)); }
+            Err(other) => { panic!("Unknown error {}", other); }
             
         }
     };

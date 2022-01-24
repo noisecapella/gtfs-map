@@ -131,7 +131,7 @@ fn main()  {
             generate(gtfs_map, connection, &nextbus_agency).unwrap()
         }
         Err(err) => {
-            panic!(err);
+            panic!("Error: {}", err);
         }
     }
 }
