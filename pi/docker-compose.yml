@@ -1,8 +1,0 @@
-version: '2'
-services:
-  compile:
-    image: ragnaroek/rust-raspberry:1.14.0
-    command: build --release
-    volumes:
-      - ../:/home/cross/project
-      - ./:/home/cross/deb-deps
