@@ -26,7 +26,7 @@ pub fn get_blob_from_path(path: &[Vec<Point>]) -> Vec<u8> {
 
     fn add_int(bytes: &mut Vec<u8>, x: i32) {
         bytes.write_i32::<BigEndian>(x).unwrap();
-    };
+    }
 
     fn add_float(bytes: &mut Vec<u8>, f: f64) {
         bytes.write_f32::<BigEndian>(f as f32).unwrap();
@@ -38,14 +38,14 @@ pub fn get_blob_from_path(path: &[Vec<Point>]) -> Vec<u8> {
             add_float(bytes, point.lat);
             add_float(bytes, point.lon);
         }
-    };
+    }
 
     fn add_paths(bytes: &mut Vec<u8>, paths: &[Vec<Point>]) {
         add_int(bytes, paths.len() as i32);
         for path in paths {
             add_path(bytes, path);
         }
-    };
+    }
     
     add_paths(&mut bytearray, path);
     bytearray
