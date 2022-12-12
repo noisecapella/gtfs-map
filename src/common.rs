@@ -2,7 +2,7 @@ extern crate csv;
 
 use std::collections::HashMap;
 use std;
-use error::Error;
+use crate::error::Error;
 
 
 pub fn read_header<T: std::io::Read>(reader: &mut csv::Reader<T>) -> Result<HashMap<String, usize>, Error> {

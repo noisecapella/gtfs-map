@@ -1,5 +1,5 @@
 use std;
-use shape::Shape;
+use crate::shape::Shape;
 use byteorder::{BigEndian, WriteBytesExt};
 
 #[derive(Copy, Debug)]

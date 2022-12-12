@@ -1,6 +1,6 @@
 use std::f64;
 
-use path::Point;
+use crate::path::Point;
 
 fn shortest_distance_to_segment(point: &Point, line: &(&Point, &Point)) -> f64 {
     // from http://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line

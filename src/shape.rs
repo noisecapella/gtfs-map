@@ -2,7 +2,7 @@ extern crate csv;
 use std::fs::File;
 use std::collections::BTreeMap;
 use std::path::Path;
-use error::Error;
+use crate::error::Error;
 
 pub struct Shape {
     pub shape_pt_lat : f64,

@@ -6,12 +6,12 @@ use std::str;
 
 use csv;
 
-use error::Error;
-use route::Route;
-use shape::Shape;
-use trip::Trip;
-use stop::Stop;
-use stop_times::StopTimes;
+use crate::error::Error;
+use crate::route::Route;
+use crate::shape::Shape;
+use crate::trip::Trip;
+use crate::stop::Stop;
+use crate::stop_times::StopTimes;
 
 pub struct GtfsMap {
     pub routes : BTreeMap<String, Route>,

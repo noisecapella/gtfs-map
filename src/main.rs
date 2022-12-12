@@ -1,5 +1,3 @@
-#![deny(warnings)]
-
 extern crate csv;
 extern crate getopts;
 extern crate rusqlite;
@@ -14,6 +12,7 @@ use std::path::Path;
 use getopts::Options;
 use rusqlite::Connection;
 use std::collections::HashSet;
+use futures::executor::block_on;
 
 pub mod path;
 pub mod gtfs_map;
@@ -54,14 +53,13 @@ CREATE TABLE IF NOT EXISTS stops (tag TEXT PRIMARY KEY, lat FLOAT, lon FLOAT, ti
     for line in create_sql.split("\n") {
         let trim_line = line.trim();
         if !trim_line.is_empty() {
-            let v: [String; 0] = [];
-            (connection.execute(trim_line, &v))?;
+            (connection.execute(trim_line, ()))?;
         }
     }
     Ok(())
 }
 
-fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> Result<(), Error> {
+async fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> Result<(), Error> {
     (create_tables(&connection))?;
     let mut index = 0;
     let mut stops_inserted: HashSet<String> = HashSet::new();
@@ -75,7 +73,7 @@ fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> 
     }
     println!("Generating nextbus stops...");
     if nextbus_agency != "mbta" {
-        index = (nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency))?;
+        index = (nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency)).await?;
     }
     if nextbus_agency == "mbta" {
         println!("Generating Hubway stops...");
@@ -83,8 +81,7 @@ fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> 
     }
     println!("routes inserted: {}", index);
 
-    let empty: [String; 0] = [];
-    (connection.execute("COMMIT", &empty))?;
+    (connection.execute("COMMIT", ()))?;
     Ok(())
 }
 
@@ -118,8 +115,7 @@ fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error>
 
     let gtfs_map = (GtfsMap::new(gtfs_path_str))?;
     let connection = (Connection::open(&output_path))?;
-    let empty: [String; 0] = [];
-    (connection.execute("BEGIN TRANSACTION", &empty))?;
+    (connection.execute("BEGIN TRANSACTION", ()))?;
     Ok((gtfs_map, connection, nextbus_agency))
 }
 
@@ -128,7 +124,7 @@ fn main()  {
     let args : Vec<_> = env::args().collect();
     match parse_args(args) {
         Ok((gtfs_map, connection, nextbus_agency)) => {
-            generate(gtfs_map, connection, &nextbus_agency).unwrap()
+            block_on(generate(gtfs_map, connection, &nextbus_agency)).unwrap();
         }
         Err(err) => {
             panic!("Error: {}", err);

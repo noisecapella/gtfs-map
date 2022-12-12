@@ -2,12 +2,12 @@ extern crate csv;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use error::Error;
+use crate::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::collections::BTreeMap;
 
-use common::read_header;
+use crate::common::read_header;
 
 pub struct StopTimes {
     pub trip_lookup: BTreeMap<String, Vec<csv::Position>>,
