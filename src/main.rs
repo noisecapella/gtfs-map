@@ -12,7 +12,7 @@ use std::path::Path;
 use getopts::Options;
 use rusqlite::Connection;
 use std::collections::HashSet;
-use futures::executor::block_on;
+use tokio::runtime::Runtime;
 
 pub mod path;
 pub mod gtfs_map;
@@ -122,9 +122,12 @@ fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error>
 fn main()  {
     // TODO: make this useful
     let args : Vec<_> = env::args().collect();
+
+    let rt = Runtime::new().unwrap();
+
     match parse_args(args) {
         Ok((gtfs_map, connection, nextbus_agency)) => {
-            block_on(generate(gtfs_map, connection, &nextbus_agency)).unwrap();
+            rt.block_on(generate(gtfs_map, connection, &nextbus_agency)).unwrap();
         }
         Err(err) => {
             panic!("Error: {}", err);

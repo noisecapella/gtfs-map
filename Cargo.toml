@@ -15,3 +15,5 @@ xml-rs = "*"
 serde = "*"
 serde_derive = "*"
 futures = "*"
+async-std = { version = "1", features = ["attributes", "tokio1"] }
+tokio = "*"
