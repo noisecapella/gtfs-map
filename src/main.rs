@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS stops (tag TEXT PRIMARY KEY, lat FLOAT, lon FLOAT, ti
     Ok(())
 }
 
-async fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> Result<(), Error> {
+pub async fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> Result<(), Error> {
     (create_tables(&connection))?;
     let mut index = 0;
     let mut stops_inserted: HashSet<String> = HashSet::new();
