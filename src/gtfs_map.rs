@@ -22,8 +22,7 @@ pub struct GtfsMap {
 }
 
 impl GtfsMap {
-    pub fn new(gtfs_path_str : String) -> Result<GtfsMap, Error> {
-        let gtfs_path = Path::new(&gtfs_path_str);
+    pub fn new(gtfs_path : &Path) -> Result<GtfsMap, Error> {
         let routes_path = gtfs_path.join("routes.txt");
         let shapes_path = gtfs_path.join("shapes.txt");
         let trips_path = gtfs_path.join("trips.txt");

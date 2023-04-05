@@ -8,7 +8,7 @@ extern crate xml;
 extern crate serde_derive;
 
 use gtfs_map::GtfsMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use getopts::Options;
 use rusqlite::Connection;
 use std::collections::HashSet;
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS stops (tag TEXT PRIMARY KEY, lat FLOAT, lon FLOAT, ti
     Ok(())
 }
 
-pub async fn generate(gtfs_map: GtfsMap, connection: Connection, nextbus_agency: &str) -> Result<(), Error> {
+pub async fn generate(gtfs_map: &GtfsMap, connection: Connection, nextbus_agency: &str) -> Result<(), Error> {
     (create_tables(&connection))?;
     let mut index = 0;
     let mut stops_inserted: HashSet<String> = HashSet::new();
@@ -91,7 +91,7 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
-fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error> {
+fn parse_args(args: Vec<String>) -> Result<(PathBuf, PathBuf, String), Error> {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print help menu");
     opts.optopt("p", "path", "Path to GTFS", "GTFS_PATH");
@@ -106,17 +106,22 @@ fn parse_args(args: Vec<String>) -> Result<(GtfsMap, Connection, String), Error>
         panic!("");
     }
 
-    let gtfs_path_str = (matches.opt_str("p").ok_or(GtfsMapError("Missing gtfs path".to_owned())))?.to_string();
+    let gtfs_path_str = (matches.opt_str("p").ok_or(GtfsMapError("Missing gtfs path".to_owned())))?;
+    let gtfs_path = PathBuf::from(&gtfs_path_str);
     let output_path_str = (matches.opt_str("o").ok_or(GtfsMapError("Missing output path".to_owned())))?;
-    let output_path = Path::new(&output_path_str);
+    let output_path = PathBuf::from(&output_path_str);
     let nextbus_agency = matches.opt_str("a").ok_or(GtfsMapError("Missing nextbus_agency".to_string()))?;
 
+    Ok((gtfs_path, output_path, nextbus_agency))
+}
+
+pub fn initialize_db(output_path: &Path) -> Result<Connection, Error> {
     let _ = std::fs::remove_file(output_path);
 
-    let gtfs_map = (GtfsMap::new(gtfs_path_str))?;
     let connection = (Connection::open(&output_path))?;
     (connection.execute("BEGIN TRANSACTION", ()))?;
-    Ok((gtfs_map, connection, nextbus_agency))
+
+    Ok(connection)
 }
 
 fn main()  {
@@ -126,8 +131,10 @@ fn main()  {
     let rt = Runtime::new().unwrap();
 
     match parse_args(args) {
-        Ok((gtfs_map, connection, nextbus_agency)) => {
-            rt.block_on(generate(gtfs_map, connection, &nextbus_agency)).unwrap();
+        Ok((gtfs_path, output_path, nextbus_agency)) => {
+            let gtfs_map = GtfsMap::new(&gtfs_path).unwrap();
+            let connection = initialize_db(&output_path).unwrap();
+            rt.block_on(generate(&gtfs_map, connection, &nextbus_agency)).unwrap();
         }
         Err(err) => {
             panic!("Error: {}", err);
