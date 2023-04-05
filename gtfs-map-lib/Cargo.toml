@@ -1,0 +1,18 @@
+[package]
+
+name = "gtfs-map-lib"
+version = "0.0.1"
+authors = ["George Schneeloch <bostonbusmap@gmail.com>"]
+edition = "2021"
+
+[dependencies]
+csv = "1.0.0-beta.5"
+reqwest = { version = "0.11.13", features=["rustls-tls"], default-features=false }
+getopts = "*"
+rusqlite = "*"
+byteorder = "*"
+xml-rs = "*"
+serde = "*"
+serde_derive = "*"
+futures = "*"
+async-std = { version = "1", features = ["attributes", "tokio1"] }
