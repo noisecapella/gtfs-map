@@ -13,7 +13,7 @@ use xml::attribute::OwnedAttribute;
 
 use crate::constants::{BUS_AGENCY_ID};
 
-type Error = Box<dyn std::error::Error>;
+type Error = Box<dyn std::error::Error + Send + Sync>;
 
 fn make_url(command: &str, route_name: Option<&str>, nextbus_agency: &str) -> String {
     format!(

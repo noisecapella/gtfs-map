@@ -14,7 +14,7 @@ pub struct StopTimes {
     pub stop_times_path: PathBuf,
 }
 
-type Error = Box<dyn std::error::Error>;
+type Error = Box<dyn std::error::Error + Send + Sync>;
 
 impl StopTimes {
     pub fn make_stop_times(stop_times_path: &Path) -> Result<StopTimes, Error> {

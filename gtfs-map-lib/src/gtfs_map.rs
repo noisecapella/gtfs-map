@@ -21,7 +21,7 @@ pub struct GtfsMap {
     pub stop_times : StopTimes,
 }
 
-type Error = Box<dyn std::error::Error>;
+type Error = Box<dyn std::error::Error + Send + Sync>;
 
 impl GtfsMap {
     pub fn new(gtfs_path : &Path) -> Result<Self, Error> {

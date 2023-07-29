@@ -6,7 +6,7 @@ use crate::constants::{BUS_AGENCY_ID, COMMUTER_RAIL_AGENCY_ID, SUBWAY_AGENCY_ID}
 use std::collections::{BTreeMap, HashSet};
 use crate::db;
 
-type Error = Box<dyn std::error::Error>;
+type Error = Box<dyn std::error::Error + Send + Sync>;
 
 pub fn add_line(conn: &Connection, route_sort_order: i32, route_ids: &[&str], as_route: &str, route_title: &str, agency_id: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>, color_override: Option<i32>) -> Result<i32, Error> {
     println!("Adding route {}...", as_route);

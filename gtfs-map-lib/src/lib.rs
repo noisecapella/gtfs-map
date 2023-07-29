@@ -28,7 +28,7 @@ pub mod stop;
 pub mod stop_times;
 pub mod constants;
 
-type Error = Box<dyn std::error::Error>;
+type Error = Box<dyn std::error::Error + Send + Sync>;
 
 fn create_tables(connection: &Connection) -> Result<(), Error> {
     println!("Creating tables...");
