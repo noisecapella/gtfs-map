@@ -2,7 +2,6 @@ extern crate csv;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use crate::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::collections::BTreeMap;
@@ -14,6 +13,8 @@ pub struct StopTimes {
     pub field_indexes: HashMap<String, usize>,
     pub stop_times_path: PathBuf,
 }
+
+type Error = Box<dyn std::error::Error>;
 
 impl StopTimes {
     pub fn make_stop_times(stop_times_path: &Path) -> Result<StopTimes, Error> {

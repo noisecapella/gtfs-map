@@ -4,13 +4,12 @@ use std::env;
 use tokio::runtime::Runtime;
 
 use gtfs_map_lib::gtfs_map::GtfsMap;
-use gtfs_map_lib::error::Error;
-use gtfs_map_lib::error::Error::GtfsMapError;
+use gtfs_map_lib::error;
 use gtfs_map_lib::{ generate, initialize_db };
 
 
 
-fn parse_args(args: Vec<String>) -> Result<(PathBuf, PathBuf, String), Error> {
+fn parse_args(args: Vec<String>) -> Result<(PathBuf, PathBuf, String), Box<dyn std::error::Error>> {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print help menu");
     opts.optopt("p", "path", "Path to GTFS", "GTFS_PATH");
@@ -25,11 +24,11 @@ fn parse_args(args: Vec<String>) -> Result<(PathBuf, PathBuf, String), Error> {
         panic!("");
     }
 
-    let gtfs_path_str = (matches.opt_str("p").ok_or(GtfsMapError("Missing gtfs path".to_owned())))?;
+    let gtfs_path_str = (matches.opt_str("p").ok_or(error::ArgumentError::new("Missing gtfs path")))?;
     let gtfs_path = PathBuf::from(&gtfs_path_str);
-    let output_path_str = (matches.opt_str("o").ok_or(GtfsMapError("Missing output path".to_owned())))?;
+    let output_path_str = (matches.opt_str("o").ok_or(error::ArgumentError::new("Missing output path")))?;
     let output_path = PathBuf::from(&output_path_str);
-    let nextbus_agency = matches.opt_str("a").ok_or(GtfsMapError("Missing nextbus_agency".to_string()))?;
+    let nextbus_agency = matches.opt_str("a").ok_or(error::ArgumentError::new("Missing nextbus_agency"))?;
 
     Ok((gtfs_path, output_path, nextbus_agency))
 }

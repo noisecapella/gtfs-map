@@ -1,7 +1,7 @@
 use std::{thread, time};
 
 use crate::db;
-use crate::error::Error;
+use crate::error;
 use rusqlite::Connection;
 use crate::gtfs_map::GtfsMap;
 use crate::path::{Point, get_blob_from_path};
@@ -12,6 +12,8 @@ use xml::reader::{EventReader, XmlEvent};
 use xml::attribute::OwnedAttribute;
 
 use crate::constants::{BUS_AGENCY_ID};
+
+type Error = Box<dyn std::error::Error>;
 
 fn make_url(command: &str, route_name: Option<&str>, nextbus_agency: &str) -> String {
     format!(
@@ -25,14 +27,14 @@ fn make_url(command: &str, route_name: Option<&str>, nextbus_agency: &str) -> St
     )
 }
 
-fn get_attribute<'a>(attributes: &'a [OwnedAttribute], key: &str) -> Result<&'a str, Error> {
+fn get_attribute<'a>(attributes: &'a [OwnedAttribute], key: &str) -> Result<&'a str, error::XmlAttributeError> {
     for attribute in attributes {
         if attribute.name.local_name == key {
             return Ok(&attribute.value);
         }
     }
 
-    Err(Error::GtfsMapError("Missing attribute".to_string()))
+    Err(error::XmlAttributeError::new(&format!("Missing attribute {}", key)))
 }
 
 async fn get_routes(nextbus_agency: &str) -> Result<Vec<(String, String)>, Error> {
@@ -52,7 +54,7 @@ async fn get_routes(nextbus_agency: &str) -> Result<Vec<(String, String)>, Error
                     routes.push((route_name.to_string(), route_title.to_string()));
                 },
             Ok(_) => {},
-            Err(other) => { panic!("Unknown error {}", other); }
+            Err(_err) => { return Err(Box::new(_err)); }
             
         }
     };

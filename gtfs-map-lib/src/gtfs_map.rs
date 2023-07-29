@@ -6,7 +6,7 @@ use std::str;
 
 use csv;
 
-use crate::error::Error;
+use crate::error;
 use crate::route::Route;
 use crate::shape::Shape;
 use crate::trip::Trip;
@@ -21,8 +21,10 @@ pub struct GtfsMap {
     pub stop_times : StopTimes,
 }
 
+type Error = Box<dyn std::error::Error>;
+
 impl GtfsMap {
-    pub fn new(gtfs_path : &Path) -> Result<GtfsMap, Error> {
+    pub fn new(gtfs_path : &Path) -> Result<Self, Error> {
         let routes_path = gtfs_path.join("routes.txt");
         let shapes_path = gtfs_path.join("shapes.txt");
         let trips_path = gtfs_path.join("trips.txt");
@@ -63,7 +65,8 @@ impl GtfsMap {
 
     pub fn find_route_by_id(&self, id : &str) -> Result<&Route, Error>
     {
-        self.routes.get(id).ok_or(Error::GtfsMapError("No route found".to_owned()))
+        let err = Box::new(error::NoRouteError::new(&format!("No route found for {}", id)));
+        self.routes.get(id).ok_or(err)
     }
 
     pub fn find_shapes_by_routes(&self, route_ids : &[&str]) -> Result<BTreeMap<&str, Vec<Shape>>, Error> {
@@ -123,7 +126,7 @@ impl GtfsMap {
 
             let stop_id_index = *self.stop_times.field_indexes.get("stop_id").unwrap();
             //println!("stop_id_index {}", stop_id_index);
-            let stop_times_indexes = (self.stop_times.trip_lookup.get(trip_id).ok_or(Error::GtfsMapError("No trip found in stop_times".to_string())))?;
+            let stop_times_indexes = (self.stop_times.trip_lookup.get(trip_id).ok_or(error::NoTripError::new(&format!("No trip found in stop_times for {}", trip_id))))?;
             //let mut firstRow = csv::StringRecord::new();
             //reader.read_record(&mut firstRow);
             for pos in stop_times_indexes.iter() {

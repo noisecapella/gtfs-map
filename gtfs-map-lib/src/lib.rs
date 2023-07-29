@@ -1,5 +1,4 @@
 use std::str;
-use error::Error;
 use rusqlite::Connection;
 #[macro_use]
 extern crate serde_derive;
@@ -28,6 +27,8 @@ pub mod simplify_path;
 pub mod stop;
 pub mod stop_times;
 pub mod constants;
+
+type Error = Box<dyn std::error::Error>;
 
 fn create_tables(connection: &Connection) -> Result<(), Error> {
     println!("Creating tables...");

@@ -2,7 +2,6 @@ extern crate csv;
 use std::fs::File;
 use std::collections::BTreeMap;
 use std::path::Path;
-use crate::error::Error;
 
 pub struct Shape {
     pub shape_pt_lat : f64,
@@ -19,7 +18,7 @@ pub struct ShapeCsv {
 }
 
 impl Shape {
-    pub fn make_shapes(shapes_path : &Path) -> Result<BTreeMap<String, Vec<Shape>>, Error> {
+    pub fn make_shapes(shapes_path : &Path) -> Result<BTreeMap<String, Vec<Shape>>, std::io::Error> {
         let file = File::open(shapes_path)?;
         let mut reader = csv::Reader::from_reader(file);
 

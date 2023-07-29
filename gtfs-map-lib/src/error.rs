@@ -1,98 +1,98 @@
-use std;
-use rusqlite;
-use getopts;
-use reqwest;
-use csv;
+use std::error::Error;
+use std::fmt::{Formatter};
 
 #[derive(Debug)]
-pub enum Error {
-    Rusqlite(rusqlite::Error),
-    GtfsMapError(String),
-    GetoptsFail(getopts::Fail),
-    Io(std::io::Error),
-    Reqwest(reqwest::Error),
-    ParseInt(std::num::ParseIntError),
-    ParseFloat(std::num::ParseFloatError),
-    Csv(csv::Error),
-    Utf8(std::str::Utf8Error),
+pub struct XmlAttributeError {
+    msg: String
 }
 
-impl std::error::Error for Error {
-    fn cause(&self) -> Option<&dyn std::error::Error> {
-        match *self {
-            Error::Rusqlite(ref err) => Some(err),
-            Error::GtfsMapError(_) => None,
-            Error::GetoptsFail(ref err) => Some(err),
-            Error::Io(ref err) => Some(err),
-            Error::Reqwest(ref err) => Some(err),
-            Error::ParseInt(ref err) => Some(err),
-            Error::ParseFloat(ref err) => Some(err),
-            Error::Csv(ref err) => Some(err),
-            Error::Utf8(ref err) => Some(err),
-        }
+impl XmlAttributeError {
+    pub fn new(msg: &str) -> Self {
+        Self { msg: msg.to_string() }
     }
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match *self {
-            Error::Rusqlite(ref err) => write!(f, "SQLite error: {}", err),
-            Error::GtfsMapError(ref err) => write!(f, "GtfsMap error: {}", err),
-            Error::GetoptsFail(ref err) => write!(f, "Getopts error: {}", err),
-            Error::Io(ref err) => write!(f, "Io error: {}", err),
-            Error::Reqwest(ref err) => write!(f, "Reqwest error: {}", err),
-            Error::ParseInt(ref err) => write!(f, "Int parse error: {}", err),
-            Error::ParseFloat(ref err) => write!(f, "Float parse error: {}", err),
-            Error::Csv(ref err) => write!(f, "Csv error: {}", err),
-            Error::Utf8(ref err) => write!(f, "Utf8 error: {}", err),
-        }
+impl std::error::Error for XmlAttributeError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
     }
 }
 
-impl From<rusqlite::Error> for Error {
-    fn from(err: rusqlite::Error) -> Error {
-        Error::Rusqlite(err)
+impl std::fmt::Display for XmlAttributeError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "XmlAttributeError(msg = \"{}\")", self.msg);
+        Ok(())
     }
 }
 
-impl From<getopts::Fail> for Error {
-    fn from(err: getopts::Fail) -> Error {
-        Error::GetoptsFail(err)
+#[derive(Debug)]
+pub struct NoRouteError {
+    msg: String
+}
+
+impl NoRouteError {
+    pub fn new(msg: &str) -> Self {
+        Self { msg: msg.to_string() }
     }
 }
 
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Error {
-        Error::Io(err)
+impl std::error::Error for NoRouteError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
     }
 }
 
-impl From<reqwest::Error> for Error {
-    fn from(err: reqwest::Error) -> Error {
-        Error::Reqwest(err)
+impl std::fmt::Display for NoRouteError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "NoRouteError(msg = \"{}\")", self.msg);
+        Ok(())
     }
 }
 
-impl From<std::num::ParseIntError> for Error {
-    fn from(err: std::num::ParseIntError) -> Error {
-        Error::ParseInt(err)
+#[derive(Debug)]
+pub struct NoTripError {
+    msg: String
+}
+
+impl NoTripError {
+    pub fn new(msg: &str) -> Self {
+        Self { msg: msg.to_string() }
     }
 }
 
-impl From<std::num::ParseFloatError> for Error {
-    fn from(err: std::num::ParseFloatError) -> Error {
-        Error::ParseFloat(err)
+impl std::error::Error for NoTripError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
     }
 }
 
-impl From<csv::Error> for Error {
-    fn from(err: csv::Error) -> Error {
-        Error::Csv(err)
+impl std::fmt::Display for NoTripError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "NoTripError(msg = \"{}\")", self.msg);
+        Ok(())
     }
 }
 
-impl From<std::str::Utf8Error> for Error {
-    fn from(err: std::str::Utf8Error) -> Error {
-        Error::Utf8(err)
+#[derive(Debug)]
+pub struct ArgumentError {
+    msg: String
+}
+
+impl ArgumentError {
+    pub fn new(msg: &str) -> Self {
+        Self { msg: msg.to_string() }
+    }
+}
+
+impl std::error::Error for ArgumentError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+}
+
+impl std::fmt::Display for ArgumentError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ArgumentError(msg = \"{}\")", self.msg);
+        Ok(())
     }
 }
