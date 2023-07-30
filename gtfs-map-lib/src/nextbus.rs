@@ -59,7 +59,7 @@ async fn get_routes(nextbus_agency: &str) -> Result<Vec<(String, String)>, Error
         }
     };
 
-    if len(routes) == 0 {
+    if routes.len() == 0 {
         Err("unable to fetch any routes")
     } else {
         Ok(routes)
