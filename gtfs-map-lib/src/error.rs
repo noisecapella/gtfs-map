@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::fmt::{Formatter};
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug)]
 pub struct XmlAttributeError {
@@ -95,4 +95,31 @@ impl std::fmt::Display for ArgumentError {
         write!(f, "ArgumentError(msg = \"{}\")", self.msg);
         Ok(())
     }
+}
+
+
+#[derive(Debug)]
+pub struct OtherError {
+    msg: String
+}
+
+impl OtherError {
+    pub fn new(msg: &str) -> Self {
+        OtherError {
+            msg: msg.to_string()
+        }
+    }
+}
+
+impl Display for OtherError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.msg)
+    }
+}
+
+impl std::error::Error for OtherError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+
 }
