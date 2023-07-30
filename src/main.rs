@@ -38,7 +38,8 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
-fn main()  {
+#[tokio::main]
+async fn main()  {
     // TODO: make this useful
     let args : Vec<_> = env::args().collect();
 
@@ -47,7 +48,7 @@ fn main()  {
     match parse_args(args) {
         Ok((gtfs_path, output_path, nextbus_agency)) => {
             let gtfs_map = GtfsMap::new(&gtfs_path).unwrap();
-            let connection = initialize_db(&output_path).unwrap();
+            let connection = initialize_db(&output_path).await.unwrap();
             rt.block_on(generate(&gtfs_map, connection, &nextbus_agency)).unwrap();
         }
         Err(err) => {

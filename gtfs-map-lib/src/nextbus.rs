@@ -2,7 +2,7 @@ use std::{thread, time};
 
 use crate::db;
 use crate::error;
-use rusqlite::Connection;
+use async_rusqlite::Connection;
 use crate::gtfs_map::GtfsMap;
 use crate::path::{Point, get_blob_from_path};
 use crate::simplify_path::simplify_path;
@@ -112,10 +112,10 @@ async fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut Has
                                     }
                                 }
                                 
-                                (db::insert_stop(conn, tag, title, lat, lon, parent_id))?;
+                                (db::insert_stop(conn, tag, title, lat, lon, parent_id)).await?;
                             }
                             
-                            (db::insert_stopmapping(conn, tag, &current_route.as_ref().unwrap().0))?;
+                            (db::insert_stopmapping(conn, tag, &current_route.as_ref().unwrap().0)).await?;
                         }
                     },
                     "direction" => {
@@ -126,7 +126,7 @@ async fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut Has
                             let dir_name = (get_attribute(&attributes, "name"))?;
                             let use_for_ui_string = (get_attribute(&attributes, "useForUI"))?;
                             let use_for_ui = use_for_ui_string == "true";
-                            (db::insert_direction(conn, dir_tag, dir_title, route_id, dir_name, use_for_ui))?;
+                            (db::insert_direction(conn, dir_tag, dir_title, route_id, dir_name, use_for_ui)).await?;
                         }
                     },
                     "point" => {
@@ -147,7 +147,7 @@ async fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut Has
                     "route" => {
                         if let Some(&(ref route_id, ref route_title, color, opposite_color)) = current_route.as_ref() {
                             let pathblob = get_blob_from_path(&current_paths);
-                            (db::insert_route(conn, route_id, route_title, color, opposite_color, start_order, BUS_AGENCY_ID, &pathblob))?;
+                            (db::insert_route(conn, route_id, route_title, color, opposite_color, start_order, BUS_AGENCY_ID, &pathblob)).await?;
                             current_paths.clear();
                         }
                         current_route = None;
