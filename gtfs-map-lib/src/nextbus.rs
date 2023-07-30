@@ -58,7 +58,12 @@ async fn get_routes(nextbus_agency: &str) -> Result<Vec<(String, String)>, Error
             
         }
     };
-    Ok(routes)
+
+    if len(routes) == 0 {
+        Err("unable to fetch any routes")
+    } else {
+        Ok(routes)
+    }
 }
 
 fn make_route_config_url(route_name: &str, nextbus_agency: &str) -> String {

@@ -66,12 +66,12 @@ pub async fn generate(gtfs_map: &GtfsMap, connection: Connection, nextbus_agency
         println!("Generating bus stops...");
         index = (mbta::generate_bus(&connection, index, &gtfs_map, &mut stops_inserted)).await?;
     }
-    println!("Generating nextbus stops...");
     if nextbus_agency != "mbta" {
+        println!("Generating nextbus stops...");
         let future = nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency);
         index = future.await?;
     }
-    else {
+    if nextbus_agency == "mbta" {
         println!("Generating Hubway stops...");
         index = (hubway::generate_hubway(&connection, index)).await?;
     }
