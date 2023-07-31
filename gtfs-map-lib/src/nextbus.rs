@@ -72,7 +72,7 @@ fn make_route_config_url(route_name: &str, nextbus_agency: &str) -> String {
     make_url("routeConfig", Some(route_name), nextbus_agency)
 }
 
-async fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut HashSet<String>, parents: &HashMap<&str, &str>, start_order: i32, nextbus_agency: &str) -> Result<i32, Error> {
+async fn add_route(conn: &Connection, gtfs_map: &GtfsMap, route_name: &str, stops_inserted: &mut HashSet<String>, parents: &HashMap<&str, &str>, start_order: i32, nextbus_agency: &str) -> Result<i32, Error> {
     let mut maybe_route_config_data = reqwest::get(&make_route_config_url(route_name, nextbus_agency)).await;
     if let Err(_) = maybe_route_config_data {
         // try one more time
@@ -115,7 +115,7 @@ async fn add_route(conn: &Connection, route_name: &str, stops_inserted: &mut Has
                                     if let Some(id) = parent {
                                         parent_id = id;
                                     } else {
-                                        println!("WARNING: tag {tag} not in GTFS", tag=tag);
+                                        println!("{agency}: WARNING: tag {tag} not in GTFS", agency=gtfs_map.agency, tag=tag);
                                     }
                                 }
                                 
@@ -180,18 +180,17 @@ fn make_parents_map<'a>(gtfs_map: &'a GtfsMap) -> HashMap<&'a str, &'a str> {
 }
 
 pub async fn generate(conn: &Connection, start_order: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>, nextbus_agency: &str) -> Result<i32, Error> {
-    println!("Generating nextbus stops...");
     let mut index = start_order;
 
     let parents = make_parents_map(gtfs_map);
     
-    println!("Downloading NextBus route data (this will take 10 or 20 minutes)...");
+    println!("{}: Downloading NextBus route data (this will take 10 or 20 minutes)...", gtfs_map.agency);
     let routes = get_routes(nextbus_agency).await?;
 
     for (route_name, route_title) in routes {
-        println!("{}...", route_title);
+        println!("{}: {}...", gtfs_map.agency, route_title);
 
-        index += (add_route(conn, &route_name, stops_inserted, &parents, index, nextbus_agency)).await?;
+        index += (add_route(conn, &gtfs_map, &route_name, stops_inserted, &parents, index, nextbus_agency)).await?;
 
         // NextBus rate limiting
         thread::sleep(time::Duration::from_secs(3));

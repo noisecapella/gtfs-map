@@ -34,7 +34,6 @@ impl Shape {
                 shape_pt_sequence: row.shape_pt_sequence,
             });
         }
-        println!("Finished reading shapes");
         Ok(map)
     }
 }

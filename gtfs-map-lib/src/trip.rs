@@ -43,7 +43,6 @@ impl Trip {
             };
             map.insert(row.trip_id, trip);
         }
-        println!("Finished reading trips");
         map
         
     }

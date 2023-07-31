@@ -47,7 +47,6 @@ impl Stop {
             };
             map.insert(row.stop_id, stop);
         }
-        println!("Finished reading stops");
         map
     }
 

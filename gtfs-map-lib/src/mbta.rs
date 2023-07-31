@@ -9,7 +9,6 @@ use crate::db;
 type Error = Box<dyn std::error::Error + Send + Sync>;
 
 pub async fn add_line(conn: &Connection, route_sort_order: i32, route_ids: &[&str], as_route: &str, route_title: &str, agency_id: i32, gtfs_map: &GtfsMap, stops_inserted: &mut HashSet<String>, color_override: Option<i32>) -> Result<i32, Error> {
-    println!("Adding route {}...", as_route);
     let route = (gtfs_map.find_route_by_id(route_ids[0]))?;
 
     let shapes = match gtfs_map.find_shapes_by_routes(route_ids) {
@@ -29,7 +28,6 @@ pub async fn add_line(conn: &Connection, route_sort_order: i32, route_ids: &[&st
     let opposite_color = color;
     let routes_added = (db::insert_route(conn, as_route, route_title, color, opposite_color, route_sort_order, agency_id, &pathblob)).await?;
 
-    println!("Adding stops...");
     let stop_rows = (gtfs_map.find_stops_by_routes(route_ids))?;
 
     for (stop_id, stop) in stop_rows {
@@ -40,9 +38,7 @@ pub async fn add_line(conn: &Connection, route_sort_order: i32, route_ids: &[&st
         (db::insert_stopmapping(conn, &stop_id, as_route)).await?;
     }
 
-    println!("Adding directions...");
     for (trip_id, trip) in gtfs_map.find_trips_by_routes(route_ids) {
-        //println!("tag {}", trip_id);
         (db::insert_direction(conn, trip_id, &trip.trip_headsign, as_route, "", true)).await?;
     }
     Ok(routes_added)
@@ -83,12 +79,12 @@ pub async fn generate_bus(connection: &Connection, startorder: i32, gtfs_map: &G
     let mut title_set = HashSet::new();
     for (route_id, route) in gtfs_map.find_routes() {
         if COMMUTER_RAIL_ROUTES.contains(&route_id) {
-            println!("skipping commuter rail {}", route_id);
+            println!("{}: skipping commuter rail {}", gtfs_map.agency, route_id);
             continue;
         }
 
         if SUBWAY_ROUTES.contains(&route_id) {
-            println!("skipping subway {}", route_id);
+            println!("{}: skipping subway {}", gtfs_map.agency, route_id);
             continue;
         }
 
@@ -110,7 +106,6 @@ pub async fn generate_bus(connection: &Connection, startorder: i32, gtfs_map: &G
         }
         title_set.insert(name.to_string());
 
-        println!("adding {}", route_id);
         index += (add_line(connection, index, &[route_id], route_id, &name, BUS_AGENCY_ID, gtfs_map, stops_inserted, None)).await?;
     }
     

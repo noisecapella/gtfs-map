@@ -63,7 +63,6 @@ impl Route {
             };
             map.insert(route_id.to_string(), route);
         }
-        println!("Finished reading routes");
         map
     }
 

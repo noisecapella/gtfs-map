@@ -31,7 +31,6 @@ pub mod constants;
 type Error = Box<dyn std::error::Error + Send + Sync>;
 
 async fn create_tables(connection: &Connection) -> Result<(), Error> {
-    println!("Creating tables...");
     let create_sql = "CREATE TABLE IF NOT EXISTS bounds (route TEXT, weekdays INTEGER, start INTEGER, stop INTEGER)
 CREATE TABLE IF NOT EXISTS directions (dirTag TEXT PRIMARY KEY, dirNameKey TEXT, dirTitleKey TEXT, dirRouteKey TEXT, useAsUI INTEGER)
 CREATE TABLE IF NOT EXISTS directionsStops (dirTag TEXT, tag TEXT)
@@ -59,23 +58,17 @@ pub async fn generate(gtfs_map: &GtfsMap, connection: Connection, nextbus_agency
     let mut index = 0;
     let mut stops_inserted: HashSet<String> = HashSet::new();
     if nextbus_agency == "mbta" {
-        println!("Generating commuter rail stops...");
         index = (mbta::generate_commuter_rail(&connection, index, &gtfs_map, &mut stops_inserted)).await?;
-        println!("Generating heavy rail stops...");
         index = (mbta::generate_heavy_rail(&connection, index, &gtfs_map, &mut stops_inserted)).await?;
-        println!("Generating bus stops...");
         index = (mbta::generate_bus(&connection, index, &gtfs_map, &mut stops_inserted)).await?;
     }
     if nextbus_agency != "mbta" {
-        println!("Generating nextbus stops...");
         let future = nextbus::generate(&connection, index, &gtfs_map, &mut stops_inserted, nextbus_agency);
         index = future.await?;
     }
     if nextbus_agency == "mbta" {
-        println!("Generating Hubway stops...");
         index = (hubway::generate_hubway(&connection, index)).await?;
     }
-    println!("routes inserted: {}", index);
 
     connection.call(move |connection| {
         connection.execute("COMMIT", ())

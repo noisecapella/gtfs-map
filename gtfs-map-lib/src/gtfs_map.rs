@@ -19,12 +19,13 @@ pub struct GtfsMap {
     pub trips : BTreeMap<String, Trip>,
     pub stops : BTreeMap<String, Stop>,
     pub stop_times : StopTimes,
+    pub agency: String
 }
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 
 impl GtfsMap {
-    pub fn new(gtfs_path : &Path) -> Result<Self, Error> {
+    pub fn new(agency: &str, gtfs_path : &Path) -> Result<Self, Error> {
         let routes_path = gtfs_path.join("routes.txt");
         let shapes_path = gtfs_path.join("shapes.txt");
         let trips_path = gtfs_path.join("trips.txt");
@@ -43,13 +44,13 @@ impl GtfsMap {
             trips : trips,
             stops : stops,
             stop_times : stop_times,
+            agency: agency.to_string()
         })
     }
 
     pub fn find_routes(&self) -> BTreeMap<&str, &Route> {
         self.routes.iter()
             .map(|(route_id, route)| {
-                println!("mapping route {}", route_id);
                 (route_id.as_ref(), route)
             })
             .collect()
@@ -94,7 +95,7 @@ impl GtfsMap {
                     );
                 }
                 None => {
-                    println!("Missing shape {}", shape_id_slice);
+                    println!("{}: Missing shape {}", self.agency, shape_id_slice);
                 }
             };
         }
@@ -125,10 +126,7 @@ impl GtfsMap {
             }
 
             let stop_id_index = *self.stop_times.field_indexes.get("stop_id").unwrap();
-            //println!("stop_id_index {}", stop_id_index);
             let stop_times_indexes = (self.stop_times.trip_lookup.get(trip_id).ok_or(error::NoTripError::new(&format!("No trip found in stop_times for {}", trip_id))))?;
-            //let mut firstRow = csv::StringRecord::new();
-            //reader.read_record(&mut firstRow);
             for pos in stop_times_indexes.iter() {
                 (reader.seek(pos.clone()))?;
 
@@ -136,10 +134,6 @@ impl GtfsMap {
                 reader.read_record(&mut row)?;
                 let stop_id = row[stop_id_index].to_string();
 
-                //println!("row {}\n", stop_id);
-                if stop_id == "70838" {
-                    println!("special route {} {}", trip_id, trip.route_id);
-                }
                 let stop = self.stops.get(&stop_id).unwrap();
                 ret.insert(stop_id, stop);
             }
