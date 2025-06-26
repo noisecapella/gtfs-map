@@ -47,7 +47,7 @@ async fn main()  {
 
     match parse_args(args) {
         Ok((gtfs_path, output_path, nextbus_agency)) => {
-            let gtfs_map = GtfsMap::new(&gtfs_path).unwrap();
+            let gtfs_map = GtfsMap::new(&nextbus_agency, &gtfs_path).unwrap();
             let connection = initialize_db(&output_path).await.unwrap();
             rt.block_on(generate(&gtfs_map, connection, &nextbus_agency)).unwrap();
         }
