@@ -45,18 +45,20 @@ pub async fn add_line(conn: &Connection, route_sort_order: i32, route_ids: &[&st
 }
 
 static COMMUTER_RAIL_ROUTES: &'static [&'static str] = &[
-    "CR-Greenbush",
-    "CR-Kingston",
-    "CR-Middleborough",
     "CR-Fairmount",
-    "CR-Providence",
-    "CR-Franklin",
-    "CR-Needham",
-    "CR-Worcester",
+    "CR-NewBedford",
     "CR-Fitchburg",
-    "CR-Lowell",
+    "CR-Worcester",
+    "CR-Franklin",
+    "CR-Greenbush",
     "CR-Haverhill",
+    "CR-Kingston",
+    "CR-Lowell",
+    "CR-Needham",
     "CR-Newburyport",
+    "CR-Providence",
+    "CR-Foxboro",
+    "CapeFlyer",
 ];
 
 static SUBWAY_ROUTES: &'static [&'static str] = &[
